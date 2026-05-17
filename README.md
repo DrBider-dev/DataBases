@@ -95,7 +95,7 @@ cd DataBases
 
 **2. Ejecutar el script de creación de tablas**
 ```bash
-psql -U postgres -f scripts/01_creacion_tablas.sql
+psql -U postgres -f Scripts/Hotel_BD.sql
 ```
 
 **3. Crear roles y asignar permisos**
