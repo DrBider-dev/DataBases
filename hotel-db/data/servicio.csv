@@ -1,0 +1,6 @@
+id_servicio,nombre,descripcion,costo,estado
+1,Lavanderi�a,Lavado y planchado de ropa,25000,Activo
+2,Spa,Masajes y relajación,80000,Activo
+3,Room Service,Servicio a la habitación,45000,Activo
+4,Transporte,Servicio aeropuerto-hotel,60000,Activo
+5,Gimnasio,Acceso al gimnasio,20000,Inactivo

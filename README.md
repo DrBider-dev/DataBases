@@ -50,21 +50,23 @@ hotel-db/
 │   └── modelo_relacional.png          # Diagrama del modelo relacional
 │
 ├── 📂 documentation/                  # Documentación técnica del proyecto
-│   ├── diccionario_de_datos.docx       # Descripción de tablas, columnas y tipos
-│   └── informe_proyecto.docx           # Informe académico completo
+│   ├── diccionario_de_datos.docx      # Descripción de tablas, columnas y tipos
+│   └── informe_proyecto.docx          # Informe académico completo
 │
 ├── 📂 scripts/                        # Scripts SQL organizados por fase
 │   ├── 01_creacion_tablas.sql         # DDL: esquemas, tablas, vistas, constraints
-│   ├── 02_roles_permisos.sql          # DCL: creación de roles y asignación de permisos
-│   └── 03_carga_datos.sql             # DML: datos de prueba (INSERT statements)
+│   ├── 02_carga_datos.sql             # DML: Consultas
+│   └── 03_consultas.sql               # DML: datos de prueba (INSERT statements)
 │
 ├── 📂 data/                           # Archivos de datos de carga
-│   ├── clientes.csv
-│   ├── habitaciones.csv
-│   ├── reservas.csv
-│   ├── empleados.csv
-│   ├── servicios.csv
-│   └── consumos.csv
+│   ├── cliente.csv
+│   ├── habitacion.csv
+│   ├── reserva.csv
+│   ├── empleado.csv
+│   ├── servicio.csv
+│   └── consumo.csv
+│   └── persona.csv
+│   └── telefono.csv
 │
 ├── 📂 src/                            # Código fuente de la aplicación (si aplica)
 │   └── app/                           # Interfaz o scripts de aplicación

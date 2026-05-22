@@ -1,0 +1,7 @@
+numero_h,tipo,estado,precio_noche
+101,Sencilla,Disponible,120000
+102,Doble,Disponible,180000
+103,Suite,Ocupada,350000
+104,Sencilla,Mantenimiento,110000
+105,Doble,Disponible,200000
+106,Suite,Disponible,400000
