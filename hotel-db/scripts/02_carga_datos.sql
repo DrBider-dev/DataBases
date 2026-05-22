@@ -1,327 +1,161 @@
+
 -- =========================================================
--- CONSULTAS / OPERACIONES SOLICITADAS
+-- DATOS DE PRUEBA PARA EL SISTEMA HOTEL
 -- =========================================================
 
--- 1) Gestiona información de clientes y reservas (insertar, actualizar, consultar)
+SET search_path TO hotel;
 
--- Insertar cliente (ejemplo)
+-- =========================================================
+-- PERSONAS
+-- =========================================================
 INSERT INTO persona (
-    primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, email, calle, carrera, numero
-) VALUES (
-    'Juan', 'Carlos', 'Pérez', 'Gómez', 'juan.perez@email.com', 'Calle 10', 'Carrera 5', '20-15'
+    id_persona,
+    primer_nombre,
+    segundo_nombre,
+    primer_apellido,
+    segundo_apellido,
+    email,
+    calle,
+    carrera,
+    numero
 )
-ON CONFLICT (email) DO NOTHING;
+VALUES
+(1, 'Juan', 'Carlos', 'Pérez', 'Gómez', 'juan@email.com', 'Calle 10', 'Carrera 5', '20-15'),
+(2, 'María', 'Fernanda', 'López', 'Ruiz', 'maria@email.com', 'Calle 15', 'Carrera 8', '10-20'),
+(3, 'Pedro', 'Andrés', 'Ramírez', 'Díaz', 'pedro@email.com', 'Calle 20', 'Carrera 12', '15-30'),
+(4, 'Laura', 'Sofía', 'García', 'Martínez', 'laura@email.com', 'Calle 25', 'Carrera 7', '18-12'),
+(5, 'Camilo', 'Esteban', 'Torres', 'Moreno', 'camilo@email.com', 'Calle 8', 'Carrera 14', '22-18'),
+(6, 'Ana', 'Lucía', 'Castro', 'Vega', 'ana@email.com', 'Calle 3', 'Carrera 2', '11-09'),
+(7, 'Luis', 'Fernando', 'Herrera', 'Jiménez', 'luis@email.com', 'Calle 40', 'Carrera 9', '33-44');
 
-INSERT INTO cliente (id_persona)
-SELECT id_persona
-FROM persona
-WHERE email = 'juan.perez@email.com'
-ON CONFLICT (id_persona) DO NOTHING;
-
+-- =========================================================
+-- TELEFONOS
+-- =========================================================
 INSERT INTO telefono (id_persona, telefono)
-SELECT id_persona, '3001234567'
-FROM persona
-WHERE email = 'juan.perez@email.com'
-ON CONFLICT DO NOTHING;
+VALUES
+(1, '3001111111'),
+(1, '3012222222'),
+(2, '3023333333'),
+(3, '3034444444'),
+(4, '3045555555'),
+(5, '3056666666'),
+(6, '3067777777'),
+(7, '3078888888');
 
--- Consultar clientes con sus datos
-SELECT
-    c.id_cliente,
-    p.id_persona,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido)) AS nombre_completo,
-    p.email,
-    p.calle,
-    p.carrera,
-    p.numero
-FROM cliente c
-JOIN persona p ON p.id_persona = c.id_persona;
+-- =========================================================
+-- CLIENTES
+-- =========================================================
+INSERT INTO cliente (id_cliente, id_persona)
+VALUES
+(1, 1),
+(2, 3),
+(3, 4),
+(4, 5);
 
--- Consultar cliente con teléfonos
-SELECT
-    c.id_cliente,
-    p.id_persona,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS cliente,
-    t.telefono
-FROM cliente c
-JOIN persona p ON p.id_persona = c.id_persona
-LEFT JOIN telefono t ON t.id_persona = p.id_persona
-ORDER BY c.id_cliente;
+-- =========================================================
+-- EMPLEADOS
+-- =========================================================
+INSERT INTO empleado (
+    id_empleado,
+    id_persona,
+    cargo,
+    area
+)
+VALUES
+(1, 2, 'Recepcionista', 'Recepción'),
+(2, 6, 'Administrador', 'Administración'),
+(3, 7, 'Botones', 'Servicio');
 
--- Actualizar datos de un cliente
-UPDATE persona p
-SET email = 'nuevo.correo@email.com',
-    calle = 'Calle 20',
-    carrera = 'Carrera 8',
-    numero = '30-22'
-FROM cliente c
-WHERE c.id_persona = p.id_persona
-  AND c.id_cliente = 1;
-
--- Insertar una reserva
-INSERT INTO reserva (
-    id_cliente, numero_h, fecha_llegada, fecha_salida, valor_reserva, tiempo_maxc
-) VALUES (
-    1, 101, '2026-05-20', '2026-05-25', 750000, 24
-);
-
--- Consultar reservas de un cliente
-SELECT
-    r.id_reserva,
-    r.fecha_llegada,
-    r.fecha_salida,
-    r.valor_reserva,
-    r.tiempo_maxc,
-    h.numero_h,
-    h.tipo,
-    h.estado
-FROM reserva r
-JOIN habitacion h ON h.numero_h = r.numero_h
-WHERE r.id_cliente = 1
-ORDER BY r.fecha_llegada DESC;
-
--- 2) Consulta disponibilidad y estado de habitaciones
-
--- Habitaciones disponibles para un rango de fechas
--- Cambia las fechas según necesites
-SELECT
-    h.numero_h,
-    h.tipo,
-    h.estado,
-    h.precio_noche
-FROM habitacion h
-WHERE h.estado = 'Disponible'
-  AND NOT EXISTS (
-      SELECT 1
-      FROM reserva r
-      WHERE r.numero_h = h.numero_h
-        AND r.fecha_llegada <= DATE '2026-05-25'
-        AND r.fecha_salida  >= DATE '2026-05-20'
-  )
-ORDER BY h.numero_h;
-
--- Consultar estado actual de todas las habitaciones
-SELECT
+-- =========================================================
+-- HABITACIONES
+-- =========================================================
+INSERT INTO habitacion (
     numero_h,
     tipo,
     estado,
     precio_noche
-FROM habitacion
-ORDER BY numero_h;
-
--- Actualizar estado de una habitación
-UPDATE habitacion
-SET estado = 'Mantenimiento'
-WHERE numero_h = 101;
-
--- Marcar habitación como ocupada
-UPDATE habitacion
-SET estado = 'Ocupada'
-WHERE numero_h = 101;
-
--- 3) Consulta y actualiza el estado de las habitaciones asignadas
-
--- Ver habitaciones asignadas a reservas activas
-SELECT
-    r.id_reserva,
-    r.id_cliente,
-    r.numero_h,
-    r.fecha_llegada,
-    r.fecha_salida,
-    h.estado
-FROM reserva r
-JOIN habitacion h ON h.numero_h = r.numero_h
-WHERE CURRENT_DATE BETWEEN r.fecha_llegada AND r.fecha_salida;
-
--- Liberar una habitación al finalizar la reserva
-UPDATE habitacion
-SET estado = 'Disponible'
-WHERE numero_h = 101;
-
--- Consulta habitaciones con reserva vencida y estado aún ocupado
-SELECT
-    r.id_reserva,
-    r.numero_h,
-    r.fecha_salida,
-    h.estado
-FROM reserva r
-JOIN habitacion h ON h.numero_h = r.numero_h
-WHERE r.fecha_salida < CURRENT_DATE
-  AND h.estado = 'Ocupada';
-
--- 4) Registrar consumos adicionales de los huéspedes
-
--- Registrar consumo
-INSERT INTO consumo (id_reserva, id_servicio, fecha_hora)
-VALUES (1, 1, NOW());
-
--- Consultar consumos de una reserva
-SELECT
-    co.id_consumo,
-    co.fecha_hora,
-    s.nombre AS servicio,
-    s.costo
-FROM consumo co
-JOIN servicio s ON s.id_servicio = co.id_servicio
-WHERE co.id_reserva = 1
-ORDER BY co.fecha_hora DESC;
-
--- Total de consumos por reserva
-SELECT
-    co.id_reserva,
-    SUM(s.costo) AS total_consumos
-FROM consumo co
-JOIN servicio s ON s.id_servicio = co.id_servicio
-GROUP BY co.id_reserva;
-
--- 5) Gestiona información de empleados (insertar, actualizar, eliminar, consultar)
-
--- Insertar empleado (ejemplo)
-INSERT INTO persona (
-    primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, email, calle, carrera, numero
-) VALUES (
-    'María', 'Fernanda', 'López', 'Ruiz', 'maria.lopez@email.com', 'Calle 15', 'Carrera 12', '10-30'
 )
-ON CONFLICT (email) DO NOTHING;
+VALUES
+(101, 'Sencilla', 'Disponible', 120000),
+(102, 'Doble', 'Disponible', 180000),
+(103, 'Suite', 'Ocupada', 350000),
+(104, 'Sencilla', 'Mantenimiento', 110000),
+(105, 'Doble', 'Disponible', 200000),
+(106, 'Suite', 'Disponible', 400000);
 
-INSERT INTO empleado (id_persona, cargo, area)
-SELECT id_persona, 'Recepcionista', 'Recepción'
-FROM persona
-WHERE email = 'maria.lopez@email.com'
-ON CONFLICT (id_persona) DO NOTHING;
+-- =========================================================
+-- RESERVAS
+-- =========================================================
+INSERT INTO reserva (
+    id_reserva,
+    id_cliente,
+    numero_h,
+    fecha_llegada,
+    fecha_salida,
+    valor_reserva,
+    tiempo_maxc
+)
+VALUES
+(1, 1, 101, '2026-05-20', '2026-05-25', 600000, 24),
+(2, 2, 102, '2026-05-21', '2026-05-24', 540000, 24),
+(3, 3, 103, '2026-05-10', '2026-05-15', 1750000, 24),
+(4, 1, 105, '2026-06-01', '2026-06-05', 800000, 24),
+(5, 4, 106, '2026-05-28', '2026-06-02', 2000000, 24);
 
--- Consultar empleados
-SELECT
-    e.id_empleado,
-    p.id_persona,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS nombre_empleado,
-    e.cargo,
-    e.area,
-    p.email
-FROM empleado e
-JOIN persona p ON p.id_persona = e.id_persona
-ORDER BY e.id_empleado;
-
--- Actualizar empleado
-UPDATE empleado
-SET cargo = 'Supervisor',
-    area = 'Administración'
-WHERE id_empleado = 1;
-
--- Actualizar datos personales del empleado
-UPDATE persona p
-SET email = 'nuevo.empleado@email.com',
-    calle = 'Avenida 3'
-FROM empleado e
-WHERE e.id_persona = p.id_persona
-  AND e.id_empleado = 1;
-
--- Eliminar empleado
-DELETE FROM empleado
-WHERE id_empleado = 1;
-
--- 6) Administra información relacionada con los servicios ofrecidos por el hotel
-
--- Insertar servicio
-INSERT INTO servicio (nombre, descripcion, costo, estado)
-VALUES ('Lavandería', 'Servicio de lavado y planchado', 25000, 'Activo');
-
--- Consultar servicios
-SELECT
+-- =========================================================
+-- SERVICIOS
+-- =========================================================
+INSERT INTO servicio (
     id_servicio,
     nombre,
     descripcion,
     costo,
     estado
-FROM servicio
-ORDER BY nombre;
+)
+VALUES
+(1, 'Lavandería', 'Lavado y planchado de ropa', 25000, 'Activo'),
+(2, 'Spa', 'Masajes y relajación', 80000, 'Activo'),
+(3, 'Room Service', 'Servicio a la habitación', 45000, 'Activo'),
+(4, 'Transporte', 'Servicio aeropuerto-hotel', 60000, 'Activo'),
+(5, 'Gimnasio', 'Acceso al gimnasio', 20000, 'Inactivo');
 
--- Actualizar servicio
-UPDATE servicio
-SET descripcion = 'Lavado, planchado y doblado',
-    costo = 30000
-WHERE id_servicio = 1;
+-- =========================================================
+-- CONSUMOS
+-- =========================================================
+INSERT INTO consumo (
+    id_consumo,
+    id_reserva,
+    id_servicio,
+    fecha_hora
+)
+VALUES
+(1, 1, 1, '2026-05-21 10:30:00'),
+(2, 1, 3, '2026-05-22 08:15:00'),
+(3, 2, 2, '2026-05-22 16:45:00'),
+(4, 2, 4, '2026-05-23 09:00:00'),
+(5, 3, 3, '2026-05-11 20:10:00'),
+(6, 4, 1, '2026-06-02 11:20:00'),
+(7, 5, 2, '2026-05-29 14:00:00'),
+(8, 5, 3, '2026-05-30 19:40:00');
 
--- Cambiar estado del servicio
-UPDATE servicio
-SET estado = 'Inactivo'
-WHERE id_servicio = 1;
+-- =========================================================
+-- VERIFICACIÓN RÁPIDA
+-- =========================================================
 
--- Eliminar servicio
-DELETE FROM servicio
-WHERE id_servicio = 1;
+-- Clientes
+SELECT * FROM cliente;
 
--- 7) Consultas generales sobre clientes, reservas y consumos para análisis administrativo
+-- Empleados
+SELECT * FROM empleado;
 
--- Total de reservas por cliente
-SELECT
-    c.id_cliente,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS cliente,
-    COUNT(r.id_reserva) AS total_reservas
-FROM cliente c
-JOIN persona p ON p.id_persona = c.id_persona
-LEFT JOIN reserva r ON r.id_cliente = c.id_cliente
-GROUP BY c.id_cliente, p.primer_nombre, p.primer_apellido
-ORDER BY total_reservas DESC;
+-- Habitaciones
+SELECT * FROM habitacion;
 
--- Total facturado por reservas
-SELECT
-    COALESCE(SUM(valor_reserva), 0) AS total_facturado_reservas
-FROM reserva;
+-- Reservas
+SELECT * FROM reserva;
 
--- Total facturado por consumos adicionales
-SELECT
-    COALESCE(SUM(s.costo), 0) AS total_facturado_consumos
-FROM consumo co
-JOIN servicio s ON s.id_servicio = co.id_servicio;
+-- Servicios
+SELECT * FROM servicio;
 
--- Resumen por cliente: reservas y consumos
-SELECT
-    c.id_cliente,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS cliente,
-    COUNT(DISTINCT r.id_reserva) AS reservas,
-    COUNT(co.id_consumo) AS consumos,
-    COALESCE(SUM(r.valor_reserva), 0) AS valor_reservas,
-    COALESCE(SUM(s.costo), 0) AS valor_consumos
-FROM cliente c
-JOIN persona p ON p.id_persona = c.id_persona
-LEFT JOIN reserva r ON r.id_cliente = c.id_cliente
-LEFT JOIN consumo co ON co.id_reserva = r.id_reserva
-LEFT JOIN servicio s ON s.id_servicio = co.id_servicio
-GROUP BY c.id_cliente, p.primer_nombre, p.primer_apellido
-ORDER BY (COALESCE(SUM(r.valor_reserva), 0) + COALESCE(SUM(s.costo), 0)) DESC;
-
--- Reservas activas en una fecha dada
-SELECT
-    r.id_reserva,
-    TRIM(CONCAT_WS(' ', p.primer_nombre, p.primer_apellido)) AS cliente,
-    r.numero_h,
-    r.fecha_llegada,
-    r.fecha_salida
-FROM reserva r
-JOIN cliente c ON c.id_cliente = r.id_cliente
-JOIN persona p ON p.id_persona = c.id_persona
-WHERE CURRENT_DATE BETWEEN r.fecha_llegada AND r.fecha_salida
-ORDER BY r.fecha_llegada;
-
--- Consumos por rango de fechas
-SELECT
-    co.id_consumo,
-    co.fecha_hora,
-    r.id_reserva,
-    s.nombre AS servicio,
-    s.costo
-FROM consumo co
-JOIN reserva r ON r.id_reserva = co.id_reserva
-JOIN servicio s ON s.id_servicio = co.id_servicio
-WHERE co.fecha_hora BETWEEN TIMESTAMP '2026-05-01 00:00:00' AND TIMESTAMP '2026-05-31 23:59:59'
-ORDER BY co.fecha_hora;
-
--- Habitaciones con más reservas
-SELECT
-    h.numero_h,
-    h.tipo,
-    COUNT(r.id_reserva) AS total_reservas
-FROM habitacion h
-LEFT JOIN reserva r ON r.numero_h = h.numero_h
-GROUP BY h.numero_h, h.tipo
-ORDER BY total_reservas DESC;
+-- Consumos
+SELECT * FROM consumo;
