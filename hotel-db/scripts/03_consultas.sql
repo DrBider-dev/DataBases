@@ -1,28 +1,11 @@
 -- =========================================================
 -- CONSULTAS / OPERACIONES SOLICITADAS
+-- Las partes con ? significa que ahí van los datos a cambiar ya depende del caso
 -- =========================================================
 
--- 1) Gestiona información de clientes y reservas (insertar, actualizar, consultar)
-
--- Insertar cliente (ejemplo)
-INSERT INTO persona (
-    primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, email, calle, carrera, numero
-) VALUES (
-    'Juan', 'Carlos', 'Pérez', 'Gómez', 'juan.perez@email.com', 'Calle 10', 'Carrera 5', '20-15'
-)
-ON CONFLICT (email) DO NOTHING;
-
-INSERT INTO cliente (id_persona)
-SELECT id_persona
-FROM persona
-WHERE email = 'juan.perez@email.com'
-ON CONFLICT (id_persona) DO NOTHING;
-
-INSERT INTO telefono (id_persona, telefono)
-SELECT id_persona, '3001234567'
-FROM persona
-WHERE email = 'juan.perez@email.com'
-ON CONFLICT DO NOTHING;
+-- =========================================================
+-- 1) Gestiona información de clientes y reservas
+-- =========================================================
 
 -- Consultar clientes con sus datos
 SELECT
@@ -49,20 +32,13 @@ ORDER BY c.id_cliente;
 
 -- Actualizar datos de un cliente
 UPDATE persona p
-SET email = 'nuevo.correo@email.com',
-    calle = 'Calle 20',
-    carrera = 'Carrera 8',
-    numero = '30-22'
+SET email = ?,
+    calle = ?,
+    carrera = ?,
+    numero = ?
 FROM cliente c
 WHERE c.id_persona = p.id_persona
-  AND c.id_cliente = 1;
-
--- Insertar una reserva
-INSERT INTO reserva (
-    id_cliente, numero_h, fecha_llegada, fecha_salida, valor_reserva, tiempo_maxc
-) VALUES (
-    1, 101, '2026-05-20', '2026-05-25', 750000, 24
-);
+  AND c.id_cliente = ?;
 
 -- Consultar reservas de un cliente
 SELECT
@@ -76,13 +52,14 @@ SELECT
     h.estado
 FROM reserva r
 JOIN habitacion h ON h.numero_h = r.numero_h
-WHERE r.id_cliente = 1
+WHERE r.id_cliente = ?
 ORDER BY r.fecha_llegada DESC;
 
+-- =========================================================
 -- 2) Consulta disponibilidad y estado de habitaciones
+-- =========================================================
 
 -- Habitaciones disponibles para un rango de fechas
--- Cambia las fechas según necesites
 SELECT
     h.numero_h,
     h.tipo,
@@ -94,8 +71,8 @@ WHERE h.estado = 'Disponible'
       SELECT 1
       FROM reserva r
       WHERE r.numero_h = h.numero_h
-        AND r.fecha_llegada <= DATE '2026-05-25'
-        AND r.fecha_salida  >= DATE '2026-05-20'
+        AND r.fecha_llegada <= ?
+        AND r.fecha_salida  >= ?
   )
 ORDER BY h.numero_h;
 
@@ -110,15 +87,12 @@ ORDER BY numero_h;
 
 -- Actualizar estado de una habitación
 UPDATE habitacion
-SET estado = 'Mantenimiento'
-WHERE numero_h = 101;
+SET estado = ?
+WHERE numero_h = ?;
 
--- Marcar habitación como ocupada
-UPDATE habitacion
-SET estado = 'Ocupada'
-WHERE numero_h = 101;
-
+-- =========================================================
 -- 3) Consulta y actualiza el estado de las habitaciones asignadas
+-- =========================================================
 
 -- Ver habitaciones asignadas a reservas activas
 SELECT
@@ -135,7 +109,7 @@ WHERE CURRENT_DATE BETWEEN r.fecha_llegada AND r.fecha_salida;
 -- Liberar una habitación al finalizar la reserva
 UPDATE habitacion
 SET estado = 'Disponible'
-WHERE numero_h = 101;
+WHERE numero_h = ?;
 
 -- Consulta habitaciones con reserva vencida y estado aún ocupado
 SELECT
@@ -148,11 +122,9 @@ JOIN habitacion h ON h.numero_h = r.numero_h
 WHERE r.fecha_salida < CURRENT_DATE
   AND h.estado = 'Ocupada';
 
+-- =========================================================
 -- 4) Registrar consumos adicionales de los huéspedes
-
--- Registrar consumo
-INSERT INTO consumo (id_reserva, id_servicio, fecha_hora)
-VALUES (1, 1, NOW());
+-- =========================================================
 
 -- Consultar consumos de una reserva
 SELECT
@@ -162,7 +134,7 @@ SELECT
     s.costo
 FROM consumo co
 JOIN servicio s ON s.id_servicio = co.id_servicio
-WHERE co.id_reserva = 1
+WHERE co.id_reserva = ?
 ORDER BY co.fecha_hora DESC;
 
 -- Total de consumos por reserva
@@ -173,21 +145,9 @@ FROM consumo co
 JOIN servicio s ON s.id_servicio = co.id_servicio
 GROUP BY co.id_reserva;
 
--- 5) Gestiona información de empleados (insertar, actualizar, eliminar, consultar)
-
--- Insertar empleado (ejemplo)
-INSERT INTO persona (
-    primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, email, calle, carrera, numero
-) VALUES (
-    'María', 'Fernanda', 'López', 'Ruiz', 'maria.lopez@email.com', 'Calle 15', 'Carrera 12', '10-30'
-)
-ON CONFLICT (email) DO NOTHING;
-
-INSERT INTO empleado (id_persona, cargo, area)
-SELECT id_persona, 'Recepcionista', 'Recepción'
-FROM persona
-WHERE email = 'maria.lopez@email.com'
-ON CONFLICT (id_persona) DO NOTHING;
+-- =========================================================
+-- 5) Gestiona información de empleados
+-- =========================================================
 
 -- Consultar empleados
 SELECT
@@ -203,27 +163,25 @@ ORDER BY e.id_empleado;
 
 -- Actualizar empleado
 UPDATE empleado
-SET cargo = 'Supervisor',
-    area = 'Administración'
-WHERE id_empleado = 1;
+SET cargo = ?,
+    area = ?
+WHERE id_empleado = ?;
 
 -- Actualizar datos personales del empleado
 UPDATE persona p
-SET email = 'nuevo.empleado@email.com',
-    calle = 'Avenida 3'
+SET email = ?,
+    calle = ?
 FROM empleado e
 WHERE e.id_persona = p.id_persona
-  AND e.id_empleado = 1;
+  AND e.id_empleado = ?;
 
 -- Eliminar empleado
 DELETE FROM empleado
-WHERE id_empleado = 1;
+WHERE id_empleado = ?;
 
--- 6) Administra información relacionada con los servicios ofrecidos por el hotel
-
--- Insertar servicio
-INSERT INTO servicio (nombre, descripcion, costo, estado)
-VALUES ('Lavandería', 'Servicio de lavado y planchado', 25000, 'Activo');
+-- =========================================================
+-- 6) Administración de servicios del hotel
+-- =========================================================
 
 -- Consultar servicios
 SELECT
@@ -237,20 +195,22 @@ ORDER BY nombre;
 
 -- Actualizar servicio
 UPDATE servicio
-SET descripcion = 'Lavado, planchado y doblado',
-    costo = 30000
-WHERE id_servicio = 1;
+SET descripcion = ?,
+    costo = ?
+WHERE id_servicio = ?;
 
 -- Cambiar estado del servicio
 UPDATE servicio
-SET estado = 'Inactivo'
-WHERE id_servicio = 1;
+SET estado = ?
+WHERE id_servicio = ?;
 
 -- Eliminar servicio
 DELETE FROM servicio
-WHERE id_servicio = 1;
+WHERE id_servicio = ?;
 
--- 7) Consultas generales sobre clientes, reservas y consumos para análisis administrativo
+-- =========================================================
+-- 7) Consultas generales para análisis administrativo
+-- =========================================================
 
 -- Total de reservas por cliente
 SELECT
@@ -313,7 +273,7 @@ SELECT
 FROM consumo co
 JOIN reserva r ON r.id_reserva = co.id_reserva
 JOIN servicio s ON s.id_servicio = co.id_servicio
-WHERE co.fecha_hora BETWEEN TIMESTAMP '2026-05-01 00:00:00' AND TIMESTAMP '2026-05-31 23:59:59'
+WHERE co.fecha_hora BETWEEN ? AND ?
 ORDER BY co.fecha_hora;
 
 -- Habitaciones con más reservas
