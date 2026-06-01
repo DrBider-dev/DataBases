@@ -1,14 +1,31 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from typing import Any, Dict, List, Optional, TypeVar, Generic, Type
-from dataclasses import dataclass, asdict, fields
-from abc import ABC, abstractmethod
-from contextlib import contextmanager
+from dataclasses import dataclass, asdict
+from typing import Optional, List, Dict, Any
 import psycopg2
-from psycopg2 import sql
+from psycopg2.extras import RealDictCursor
 
 # =========================================================
-# 1. ENTIDADES DE DOMINIO (MODELOS)
+# 1. UTILIDAD DE CONEXIÓN
+# =========================================================
+class DBConnection:
+    def __init__(self):
+        self.config = {
+            "dbname": "Hotel",
+            "user": "postgres",
+            "password": "20231020128", # Ajusta tu contraseña aquí
+            "host": "localhost",
+            "port": "5432",
+        }
+
+    def get_connection(self):
+        # Retorna una conexión a la base de datos
+        return psycopg2.connect(**self.config)
+
+db = DBConnection()
+
+# =========================================================
+# 2. ENTIDADES (Modelos de Datos)
 # =========================================================
 
 @dataclass
@@ -25,7 +42,7 @@ class Persona:
 
 @dataclass
 class Telefono:
-    id_telefono: Optional[int] # Autogenerado
+    id_telefono: Optional[int]
     id_persona: int
     telefono: str
 
@@ -48,7 +65,7 @@ class Habitacion:
 
 @dataclass
 class Reserva:
-    id_reserva: Optional[int] # Autogenerado
+    id_reserva: Optional[int]
     id_cliente: int
     numero_h: int
     fecha_llegada: str
@@ -58,7 +75,7 @@ class Reserva:
 
 @dataclass
 class Servicio:
-    id_servicio: Optional[int] # Autogenerado
+    id_servicio: Optional[int]
     nombre: str
     descripcion: str
     costo: float
@@ -66,229 +83,247 @@ class Servicio:
 
 @dataclass
 class Consumo:
-    id_consumo: Optional[int] # Autogenerado
+    id_consumo: Optional[int]
     id_reserva: int
     id_servicio: int
     fecha_hora: str
 
-T = TypeVar('T')
-
 # =========================================================
-# 2. CAPA DAO (CONTRATO Y LÓGICA BASE)
+# 3. DAOs (ESTILO DEL PROFESOR)
 # =========================================================
 
-class BaseDAO(Generic[T], ABC):
-    @abstractmethod
-    def listar(self) -> List[T]: pass
-    @abstractmethod
-    def crear(self, entidad: T) -> bool: pass
-    @abstractmethod
-    def actualizar(self, entidad: T) -> bool: pass
-    @abstractmethod
-    def eliminar(self, pk: Any) -> bool: pass
+class PersonaDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.persona ORDER BY id_persona;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
 
-class PostgresDAO(BaseDAO[T]):
-    def __init__(self, db_config: Dict[str, Any], schema: str, table_name: str, model_class: Type[T], pk_col: str):
-        self.config = db_config
-        self.schema = schema
-        self.table = table_name
-        self.model = model_class
-        self.pk = pk_col
-
-    @contextmanager
-    def _connection(self):
-        conn = psycopg2.connect(**self.config)
-        try:
+    def crear(self, p: Persona):
+        sql = "INSERT INTO hotel.persona VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s);"
+        with db.get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(self.schema)))
-            yield conn
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
+                cur.execute(sql, (p.id_persona, p.primer_nombre, p.segundo_nombre, p.primer_apellido, 
+                                 p.segundo_apellido, p.email, p.calle, p.carrera, p.numero))
+                conn.commit()
 
-    def listar(self) -> List[T]:
-        with self._connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(f"SELECT * FROM {self.table} ORDER BY {self.pk}")
-                return [self.model(*row) for row in cur.fetchall()]
+class TelefonoDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.telefono ORDER BY id_telefono;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
 
-    def crear(self, obj: T) -> bool:
-        data = asdict(obj)
-        # Filtramos campos autogenerados que sean None (IDs)
-        items = {k: v for k, v in data.items() if v is not None}
-        cols = items.keys()
-        vals = tuple(items.values())
-        query = f"INSERT INTO {self.table} ({', '.join(cols)}) VALUES ({', '.join(['%s']*len(vals))})"
-        with self._connection() as conn:
+    def crear(self, t: Telefono):
+        sql = "INSERT INTO hotel.telefono (id_persona, telefono) VALUES (%s, %s);"
+        with db.get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(query, vals)
-        return True
+                cur.execute(sql, (t.id_persona, t.telefono))
+                conn.commit()
 
-    def actualizar(self, obj: T) -> bool:
-        data = asdict(obj)
-        pk_val = data.pop(self.pk)
-        set_clause = ", ".join([f"{k}=%s" for k in data.keys()])
-        query = f"UPDATE {self.table} SET {set_clause} WHERE {self.pk}=%s"
-        with self._connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (*data.values(), pk_val))
-                return cur.rowcount > 0
+class ClienteDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.cliente;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
 
-    def eliminar(self, pk: Any) -> bool:
-        with self._connection() as conn:
+    def crear(self, c: Cliente):
+        sql = "INSERT INTO hotel.cliente VALUES (%s);"
+        with db.get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(f"DELETE FROM {self.table} WHERE {self.pk} = %s", (pk,))
-                return cur.rowcount > 0
+                cur.execute(sql, (c.id_persona,))
+                conn.commit()
+
+class EmpleadoDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.empleado;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+
+    def crear(self, e: Empleado):
+        sql = "INSERT INTO hotel.empleado VALUES (%s, %s, %s);"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (e.id_persona, e.cargo, e.area))
+                conn.commit()
+
+class HabitacionDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.habitacion ORDER BY numero_h;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+
+    def crear(self, h: Habitacion):
+        sql = "INSERT INTO hotel.habitacion VALUES (%s, %s, %s, %s);"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (h.numero_h, h.tipo, h.estado, h.precio_noche))
+                conn.commit()
+
+class ReservaDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.reserva ORDER BY id_reserva;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+
+    def crear(self, r: Reserva):
+        sql = "INSERT INTO hotel.reserva (id_cliente, numero_h, fecha_llegada, fecha_salida, valor_reserva, tiempo_maxc) VALUES (%s,%s,%s,%s,%s,%s);"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (r.id_cliente, r.numero_h, r.fecha_llegada, r.fecha_salida, r.valor_reserva, r.tiempo_maxc))
+                conn.commit()
+
+class ServicioDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.servicio ORDER BY id_servicio;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+
+    def crear(self, s: Servicio):
+        sql = "INSERT INTO hotel.servicio (nombre, descripcion, costo, estado) VALUES (%s, %s, %s, %s);"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (s.nombre, s.descripcion, s.costo, s.estado))
+                conn.commit()
+
+class ConsumoDAO:
+    def listar(self):
+        sql = "SELECT * FROM hotel.consumo ORDER BY id_consumo;"
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                return cur.fetchall()
+
+    def crear(self, c: Consumo):
+        sql = "INSERT INTO hotel.consumo (id_reserva, id_servicio) VALUES (%s, %s);"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (c.id_reserva, c.id_servicio))
+                conn.commit()
 
 # =========================================================
-# 3. INTERFAZ GRÁFICA (UI)
+# 4. INTERFAZ GRÁFICA DINÁMICA
 # =========================================================
 
-class CRUDApp(tk.Tk):
-    def __init__(self, db_config: Dict[str, Any], mapping: Dict[str, Dict]):
+class AppHotel(tk.Tk):
+    def __init__(self, mapping):
         super().__init__()
-        self.title("Sistema Hotel - Estándar DAO")
-        self.geometry("1100x750")
+        self.title("Sistema Hotelera - Arquitectura DAO")
+        self.geometry("1100x700")
         self.mapping = mapping
         self.current_key = "persona"
-        self.inputs = {}
+        
         self._setup_ui()
-        self.refresh_grid()
+        self.cargar_datos()
 
     def _setup_ui(self):
-        # Header
-        top = ttk.Frame(self, padding=10)
-        top.pack(fill="x")
-        ttk.Label(top, text="TABLA:").pack(side="left")
-        self.combo = ttk.Combobox(top, values=list(self.mapping.keys()), state="readonly")
+        # Selector de Tabla
+        frame_top = ttk.Frame(self, padding=10)
+        frame_top.pack(fill="x")
+        ttk.Label(frame_top, text="Gestionar Tabla:").pack(side="left")
+        self.combo = ttk.Combobox(frame_top, values=list(self.mapping.keys()), state="readonly")
         self.combo.set(self.current_key)
         self.combo.pack(side="left", padx=5)
-        self.combo.bind("<<ComboboxSelected>>", self._change_table)
+        self.combo.bind("<<ComboboxSelected>>", self.on_change_table)
 
-        # Paneles
-        pane = ttk.PanedWindow(self, orient="horizontal")
-        pane.pack(fill="both", expand=True, padx=10, pady=5)
+        # Panel Central (Formulario y Tabla)
+        self.pane = ttk.PanedWindow(self, orient="horizontal")
+        self.pane.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.form_container = ttk.LabelFrame(pane, text="Formulario", padding=10)
-        pane.add(self.form_container, weight=1)
-        self._draw_form()
+        # Formulario
+        self.form_frame = ttk.LabelFrame(self.pane, text="Datos", padding=10)
+        self.pane.add(self.form_frame, weight=1)
+        self._build_form()
 
-        self.tree_frame = ttk.Frame(pane)
-        pane.add(self.tree_frame, weight=3)
-        self.tree = ttk.Treeview(self.tree_frame, show="headings")
+        # Grid
+        grid_frame = ttk.Frame(self.pane)
+        self.pane.add(grid_frame, weight=3)
+        self.tree = ttk.Treeview(grid_frame, show="headings")
         self.tree.pack(fill="both", expand=True)
-        self.tree.bind("<<TreeviewSelect>>", self._on_select)
 
         # Botones
-        btns = ttk.Frame(self, padding=10)
-        btns.pack(fill="x")
-        ttk.Button(btns, text="Limpiar", command=self._clear).pack(side="left", padx=2)
-        ttk.Button(btns, text="Crear", command=self._create).pack(side="left", padx=2)
-        ttk.Button(btns, text="Actualizar", command=self._update).pack(side="left", padx=2)
-        ttk.Button(btns, text="Eliminar", command=self._delete).pack(side="left", padx=2)
+        frame_btns = ttk.Frame(self, padding=10)
+        frame_btns.pack(fill="x")
+        ttk.Button(frame_btns, text="Guardar Nuevo", command=self.guardar).pack(side="left", padx=5)
+        ttk.Button(frame_btns, text="Refrescar", command=self.cargar_datos).pack(side="right")
 
-    def _draw_form(self):
-        for w in self.form_container.winfo_children(): w.destroy()
+    def _build_form(self):
+        for w in self.form_frame.winfo_children(): w.destroy()
         self.inputs = {}
+        # Obtener campos de la dataclass correspondiente
         cls = self.mapping[self.current_key]["class"]
-        for f in fields(cls):
-            ttk.Label(self.form_container, text=f"{f.name.upper()}:").pack(anchor="w")
-            ent = ttk.Entry(self.form_container)
+        import dataclasses
+        for field in dataclasses.fields(cls):
+            # No mostramos campos autogenerados en el formulario de creación básica
+            if field.name.startswith('id_') and 'Optional' in str(field.type):
+                continue
+            ttk.Label(self.form_frame, text=field.name.upper()+":").pack(anchor="w")
+            ent = ttk.Entry(self.form_frame)
             ent.pack(fill="x", pady=(0, 5))
-            self.inputs[f.name] = ent
+            self.inputs[field.name] = ent
 
-    def _change_table(self, _):
+    def on_change_table(self, _):
         self.current_key = self.combo.get()
-        self._draw_form()
-        self.refresh_grid()
+        self._build_form()
+        self.cargar_datos()
 
-    def refresh_grid(self):
+    def cargar_datos(self):
+        self.tree.delete(*self.tree.get_children())
         dao = self.mapping[self.current_key]["dao"]
+        datos = dao.listar()
+
+        if not datos: return
+        columnas = list(datos[0].keys())
+        self.tree["columns"] = columnas
+        for col in columnas:
+            self.tree.heading(col, text=col.upper())
+            self.tree.column(col, width=100)
+        for row in datos:
+            self.tree.insert("", "end", values=list(row.values()))
+
+    def guardar(self):
         try:
-            data = dao.listar()
-            self.tree.delete(*self.tree.get_children())
-            if not data: return
-            cols = [f.name for f in fields(data[0])]
-            self.tree["columns"] = cols
-            for c in cols:
-                self.tree.heading(c, text=c.title())
-                self.tree.column(c, width=100)
-            for item in data:
-                self.tree.insert("", "end", values=tuple(asdict(item).values()))
+            cls = self.mapping[self.current_key]["class"]
+            dao = self.mapping[self.current_key]["dao"]
+            
+            # Crear objeto desde formulario
+            data = {k: v.get() for k, v in self.inputs.items()}
+            # Manejar nulos para campos opcionales
+            for k, v in data.items():
+                if v == "": data[k] = None
+            
+            obj = cls(**data)
+            dao.crear(obj)
+            self.cargar_datos()
+            messagebox.showinfo("Éxito", "Registro guardado correctamente")
         except Exception as e:
-            messagebox.showerror("Error", str(e))
-
-    def _on_select(self, _):
-        sel = self.tree.selection()
-        if sel:
-            vals = self.tree.item(sel[0], "values")
-            for i, key in enumerate(self.inputs.keys()):
-                self.inputs[key].delete(0, tk.END)
-                if vals[i] != "None": self.inputs[key].insert(0, vals[i])
-
-    def _get_obj(self):
-        cls = self.mapping[self.current_key]["class"]
-        raw = {k: v.get() for k, v in self.inputs.items()}
-        for f in fields(cls):
-            if raw[f.name] == "": raw[f.name] = None
-            elif f.type == int or f.type == Optional[int]: 
-                raw[f.name] = int(raw[f.name]) if raw[f.name] is not None else None
-            elif f.type == float: raw[f.name] = float(raw[f.name])
-        return cls(**raw)
-
-    def _create(self):
-        try:
-            self.mapping[self.current_key]["dao"].crear(self._get_obj())
-            self.refresh_grid()
-            messagebox.showinfo("OK", "Registro creado")
-        except Exception as e: messagebox.showerror("Error", str(e))
-
-    def _update(self):
-        try:
-            self.mapping[self.current_key]["dao"].actualizar(self._get_obj())
-            self.refresh_grid()
-            messagebox.showinfo("OK", "Actualizado")
-        except Exception as e: messagebox.showerror("Error", str(e))
-
-    def _delete(self):
-        sel = self.tree.selection()
-        if not sel: return
-        pk = self.tree.item(sel[0], "values")[0]
-        if messagebox.askyesno("?", "¿Eliminar registro?"):
-            self.mapping[self.current_key]["dao"].eliminar(pk)
-            self.refresh_grid()
-
-    def _clear(self):
-        for e in self.inputs.values(): e.delete(0, tk.END)
-
-# =========================================================
-# CONFIGURACIÓN
-# =========================================================
-
-DB_CONFIG = {
-    "dbname": "Hotel",
-    "user": "postgres",
-    "password": "20231020128",
-    "host": "localhost",
-    "port": "5432",
-}
+            messagebox.showerror("Error", f"No se pudo guardar: {e}")
 
 if __name__ == "__main__":
-    schema = "hotel"
-    # Mapeo exclusivo de tus tablas SQL
-    mapping = {
-        "persona": {"dao": PostgresDAO(DB_CONFIG, schema, "persona", Persona, "id_persona"), "class": Persona},
-        "telefono": {"dao": PostgresDAO(DB_CONFIG, schema, "telefono", Telefono, "id_telefono"), "class": Telefono},
-        "cliente": {"dao": PostgresDAO(DB_CONFIG, schema, "cliente", Cliente, "id_persona"), "class": Cliente},
-        "empleado": {"dao": PostgresDAO(DB_CONFIG, schema, "empleado", Empleado, "id_persona"), "class": Empleado},
-        "habitacion": {"dao": PostgresDAO(DB_CONFIG, schema, "habitacion", Habitacion, "numero_h"), "class": Habitacion},
-        "reserva": {"dao": PostgresDAO(DB_CONFIG, schema, "reserva", Reserva, "id_reserva"), "class": Reserva},
-        "servicio": {"dao": PostgresDAO(DB_CONFIG, schema, "servicio", Servicio, "id_servicio"), "class": Servicio},
-        "consumo": {"dao": PostgresDAO(DB_CONFIG, schema, "consumo", Consumo, "id_consumo"), "class": Consumo},
+    # Registro de todas las tablas y sus DAOs
+    # Esto une el modelo, el DAO y la interfaz
+    tablas_hotel = {
+        "persona": {"dao": PersonaDAO(), "class": Persona},
+        "telefono": {"dao": TelefonoDAO(), "class": Telefono},
+        "cliente": {"dao": ClienteDAO(), "class": Cliente},
+        "empleado": {"dao": EmpleadoDAO(), "class": Empleado},
+        "habitacion": {"dao": HabitacionDAO(), "class": Habitacion},
+        "reserva": {"dao": ReservaDAO(), "class": Reserva},
+        "servicio": {"dao": ServicioDAO(), "class": Servicio},
+        "consumo": {"dao": ConsumoDAO(), "class": Consumo},
     }
     
-    app = CRUDApp(DB_CONFIG, mapping)
+    app = AppHotel(tablas_hotel)
     app.mainloop()
