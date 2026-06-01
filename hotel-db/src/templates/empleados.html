@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form action="/empleados/guardar" method="POST" class="row g-3">
+            <div class="col-md-3">
+                <input type="number" name="id_persona" class="form-control" placeholder="ID Persona" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="cargo" class="form-control" placeholder="Cargo (Ej: Recepcionista)" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" name="area" class="form-control" placeholder="Área (Ej: Ventas)" required>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">Contratar Empleado</button>
+            </div>
+        </form>
+    </div>
+</div>
+<table class="table bg-white">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Cargo</th>
+            <th>Área</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in lista %}
+        <tr>
+            <td>{{ e.id_persona }}</td>
+            <td>{{ e.cargo }}</td>
+            <td>{{ e.area }}</td>
+            <td><a href="/eliminar/empleado/{{ e.id_persona }}" class="btn btn-sm btn-danger">Despedir</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-info text-white fw-bold">Nuevo Servicio</div>
+            <div class="card-body">
+                <form action="/servicios/guardar" method="POST">
+                    <input type="text" name="nombre" class="form-control mb-2" placeholder="Nombre del Servicio" required>
+                    <textarea name="descripcion" class="form-control mb-2" placeholder="Descripción"></textarea>
+                    <input type="number" step="0.01" name="costo" class="form-control mb-2" placeholder="Costo" required>
+                    <select name="estado" class="form-select mb-2">
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                    <button type="submit" class="btn btn-info text-white w-100">Crear Servicio</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="row">
+            {% for s in lista %}
+            <div class="col-md-6 mb-3">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ s.nombre }}</h5>
+                        <p class="card-text text-muted small">{{ s.descripcion }}</p>
+                        <p class="fw-bold text-primary">${{ s.costo }}</p>
+                        <a href="/eliminar/servicio/{{ s.id_servicio }}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

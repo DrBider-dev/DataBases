@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning">Registrar Consumo</div>
+            <div class="card-body">
+                <form action="/consumos/guardar" method="POST">
+                    <label>ID Reserva:</label>
+                    <input type="number" name="id_reserva" class="form-control mb-2" required>
+                    <label>ID Servicio:</label>
+                    <input type="number" name="id_servicio" class="form-control mb-2" required>
+                    <button type="submit" class="btn btn-warning w-100">Registrar Cargo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <table class="table table-striped bg-white shadow-sm p-3">
+            <thead>
+                <tr>
+                    <th>ID Consumo</th>
+                    <th>ID Reserva</th>
+                    <th>ID Servicio</th>
+                    <th>Fecha/Hora</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in lista %}
+                <tr>
+                    <td>{{ c.id_consumo }}</td>
+                    <td>{{ c.id_reserva }}</td>
+                    <td>{{ c.id_servicio }}</td>
+                    <td>{{ c.fecha_hora }}</td>
+                    <td><a href="/eliminar/consumo/{{ c.id_consumo }}" class="btn btn-danger btn-sm">X</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

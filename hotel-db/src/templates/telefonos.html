@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-secondary text-white fw-bold">Agregar Teléfono</div>
+            <div class="card-body">
+                <form action="/telefonos/guardar" method="POST">
+                    <label class="form-label">ID Persona (Dueño):</label>
+                    <input type="number" name="id_persona" class="form-control mb-3" placeholder="Ej: 1020..." required>
+                    <label class="form-label">Número de Teléfono:</label>
+                    <input type="text" name="telefono" class="form-control mb-3" placeholder="Ej: 300123..." required>
+                    <button type="submit" class="btn btn-secondary w-100">Vincular Teléfono</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="bg-white p-3 rounded shadow-sm">
+            <h4 class="mb-3">Lista de Teléfonos</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID Registro</th>
+                        <th>ID Persona</th>
+                        <th>Teléfono</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in lista %}
+                    <tr>
+                        <td>{{ t.id_telefono }}</td>
+                        <td>{{ t.id_persona }}</td>
+                        <td>{{ t.telefono }}</td>
+                        <td>
+                            <a href="/eliminar/telefono/{{ t.id_telefono }}" class="btn btn-outline-danger btn-sm">Eliminar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

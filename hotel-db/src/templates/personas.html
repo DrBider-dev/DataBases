@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">Registrar Persona</div>
+            <div class="card-body">
+                <form action="/personas/guardar" method="POST">
+                    <input type="number" name="id_persona" class="form-control mb-2" placeholder="Cédula/ID" required>
+                    <input type="text" name="primer_nombre" class="form-control mb-2" placeholder="Primer Nombre" required>
+                    <input type="text" name="primer_apellido" class="form-control mb-2" placeholder="Primer Apellido" required>
+                    <input type="email" name="email" class="form-control mb-2" placeholder="Correo Electrónico" required>
+                    <input type="text" name="segundo_nombre" class="form-control mb-2" placeholder="Segundo Nombre (Opcional)">
+                    <input type="text" name="segundo_apellido" class="form-control mb-2" placeholder="Segundo Apellido (Opcional)">
+                    <button type="submit" class="btn btn-success w-100">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="table-responsive bg-white p-3 rounded shadow-sm">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in lista %}
+                    <tr>
+                        <td>{{ p.id_persona }}</td>
+                        <td>{{ p.primer_nombre }} {{ p.primer_apellido }}</td>
+                        <td>{{ p.email }}</td>
+                        <td>
+                            <a href="/personas/eliminar/{{ p.id_persona }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar?')">🗑</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

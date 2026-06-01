@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="p-5 mb-4 bg-white rounded-3 shadow-sm">
+    <div class="container-fluid py-5 text-center">
+        <h1 class="display-5 fw-bold">Bienvenido, Santiago</h1>
+        <p class="col-md-8 fs-4 mx-auto">Sistema de administración hotelera con arquitectura DAO y seguridad .env</p>
+        <hr>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="/personas" class="btn btn-primary btn-lg px-4">Gestionar Personas</a>
+            <a href="/habitaciones" class="btn btn-outline-secondary btn-lg px-4">Habitaciones</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

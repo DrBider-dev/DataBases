@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container bg-white p-4 shadow-sm rounded">
+    <h3>Gestión de Clientes</h3>
+    <hr>
+    <form action="/clientes/guardar" method="POST" class="input-group mb-4">
+        <input type="number" name="id_persona" class="form-control" placeholder="Ingrese ID de la persona para volverla cliente" required>
+        <button class="btn btn-success" type="submit">Hacer Cliente</button>
+    </form>
+    <table class="table">
+        <thead>
+            <tr><th>ID Persona</th><th>Acción</th></tr>
+        </thead>
+        <tbody>
+            {% for c in lista %}
+            <tr>
+                <td>{{ c.id_persona }}</td>
+                <td><a href="/eliminar/cliente/{{ c.id_persona }}" class="btn btn-sm btn-outline-danger">Quitar</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
