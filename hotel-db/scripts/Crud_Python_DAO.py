@@ -13,7 +13,7 @@ class DBConnection:
         self.config = {
             "dbname": "Hotel",
             "user": "postgres",
-            "password": "20231020128", # Ajusta tu contraseña aquí
+            "password": "20231020128",
             "host": "localhost",
             "port": "5432",
         }
