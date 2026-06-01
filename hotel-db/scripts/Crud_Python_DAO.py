@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox
 from dataclasses import dataclass, asdict
@@ -19,8 +20,9 @@ class DBConnection:
         }
 
     def get_connection(self):
-        # Retorna una conexión a la base de datos
-        return psycopg2.connect(**self.config)
+        conn = psycopg2.connect(**self.config)
+        conn.set_client_encoding('UTF8')
+        return conn
 
 db = DBConnection()
 
@@ -89,7 +91,7 @@ class Consumo:
     fecha_hora: str
 
 # =========================================================
-# 3. DAOs (ESTILO DEL PROFESOR)
+# 3. DAOs (CON TODAS LAS FUNCIONES: LISTAR, CREAR, ELIMINAR)
 # =========================================================
 
 class PersonaDAO:
@@ -108,6 +110,14 @@ class PersonaDAO:
                                  p.segundo_apellido, p.email, p.calle, p.carrera, p.numero))
                 conn.commit()
 
+    def eliminar(self, id_persona):
+        sql = "DELETE FROM hotel.persona WHERE id_persona = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_persona,))
+                conn.commit()
+                return cur.rowcount
+
 class TelefonoDAO:
     def listar(self):
         sql = "SELECT * FROM hotel.telefono ORDER BY id_telefono;"
@@ -122,6 +132,14 @@ class TelefonoDAO:
             with conn.cursor() as cur:
                 cur.execute(sql, (t.id_persona, t.telefono))
                 conn.commit()
+
+    def eliminar(self, id_telefono):
+        sql = "DELETE FROM hotel.telefono WHERE id_telefono = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_telefono,))
+                conn.commit()
+                return cur.rowcount
 
 class ClienteDAO:
     def listar(self):
@@ -138,6 +156,14 @@ class ClienteDAO:
                 cur.execute(sql, (c.id_persona,))
                 conn.commit()
 
+    def eliminar(self, id_persona):
+        sql = "DELETE FROM hotel.cliente WHERE id_persona = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_persona,))
+                conn.commit()
+                return cur.rowcount
+
 class EmpleadoDAO:
     def listar(self):
         sql = "SELECT * FROM hotel.empleado;"
@@ -152,6 +178,14 @@ class EmpleadoDAO:
             with conn.cursor() as cur:
                 cur.execute(sql, (e.id_persona, e.cargo, e.area))
                 conn.commit()
+
+    def eliminar(self, id_persona):
+        sql = "DELETE FROM hotel.empleado WHERE id_persona = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_persona,))
+                conn.commit()
+                return cur.rowcount
 
 class HabitacionDAO:
     def listar(self):
@@ -168,6 +202,14 @@ class HabitacionDAO:
                 cur.execute(sql, (h.numero_h, h.tipo, h.estado, h.precio_noche))
                 conn.commit()
 
+    def eliminar(self, numero_h):
+        sql = "DELETE FROM hotel.habitacion WHERE numero_h = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (numero_h,))
+                conn.commit()
+                return cur.rowcount
+
 class ReservaDAO:
     def listar(self):
         sql = "SELECT * FROM hotel.reserva ORDER BY id_reserva;"
@@ -182,6 +224,14 @@ class ReservaDAO:
             with conn.cursor() as cur:
                 cur.execute(sql, (r.id_cliente, r.numero_h, r.fecha_llegada, r.fecha_salida, r.valor_reserva, r.tiempo_maxc))
                 conn.commit()
+
+    def eliminar(self, id_reserva):
+        sql = "DELETE FROM hotel.reserva WHERE id_reserva = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_reserva,))
+                conn.commit()
+                return cur.rowcount
 
 class ServicioDAO:
     def listar(self):
@@ -198,6 +248,14 @@ class ServicioDAO:
                 cur.execute(sql, (s.nombre, s.descripcion, s.costo, s.estado))
                 conn.commit()
 
+    def eliminar(self, id_servicio):
+        sql = "DELETE FROM hotel.servicio WHERE id_servicio = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_servicio,))
+                conn.commit()
+                return cur.rowcount
+
 class ConsumoDAO:
     def listar(self):
         sql = "SELECT * FROM hotel.consumo ORDER BY id_consumo;"
@@ -213,14 +271,22 @@ class ConsumoDAO:
                 cur.execute(sql, (c.id_reserva, c.id_servicio))
                 conn.commit()
 
+    def eliminar(self, id_consumo):
+        sql = "DELETE FROM hotel.consumo WHERE id_consumo = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (id_consumo,))
+                conn.commit()
+                return cur.rowcount
+
 # =========================================================
-# 4. INTERFAZ GRÁFICA DINÁMICA
+# 4. INTERFAZ GRÁFICA (UI)
 # =========================================================
 
 class AppHotel(tk.Tk):
     def __init__(self, mapping):
         super().__init__()
-        self.title("Sistema Hotelera - Arquitectura DAO")
+        self.title("Hotel CRUD - Patrón DAO Estricto")
         self.geometry("1100x700")
         self.mapping = mapping
         self.current_key = "persona"
@@ -229,21 +295,20 @@ class AppHotel(tk.Tk):
         self.cargar_datos()
 
     def _setup_ui(self):
-        # Selector de Tabla
-        frame_top = ttk.Frame(self, padding=10)
-        frame_top.pack(fill="x")
-        ttk.Label(frame_top, text="Gestionar Tabla:").pack(side="left")
-        self.combo = ttk.Combobox(frame_top, values=list(self.mapping.keys()), state="readonly")
+        # Selector
+        f_top = ttk.Frame(self, padding=10)
+        f_top.pack(fill="x")
+        ttk.Label(f_top, text="Tabla:").pack(side="left")
+        self.combo = ttk.Combobox(f_top, values=list(self.mapping.keys()), state="readonly")
         self.combo.set(self.current_key)
         self.combo.pack(side="left", padx=5)
         self.combo.bind("<<ComboboxSelected>>", self.on_change_table)
 
-        # Panel Central (Formulario y Tabla)
+        # Paneles
         self.pane = ttk.PanedWindow(self, orient="horizontal")
         self.pane.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # Formulario
-        self.form_frame = ttk.LabelFrame(self.pane, text="Datos", padding=10)
+        self.form_frame = ttk.LabelFrame(self.pane, text="Formulario Nuevo", padding=10)
         self.pane.add(self.form_frame, weight=1)
         self._build_form()
 
@@ -254,25 +319,25 @@ class AppHotel(tk.Tk):
         self.tree.pack(fill="both", expand=True)
 
         # Botones
-        frame_btns = ttk.Frame(self, padding=10)
-        frame_btns.pack(fill="x")
-        ttk.Button(frame_btns, text="Guardar Nuevo", command=self.guardar).pack(side="left", padx=5)
-        ttk.Button(frame_btns, text="Refrescar", command=self.cargar_datos).pack(side="right")
+        f_btns = ttk.Frame(self, padding=10)
+        f_btns.pack(fill="x")
+        ttk.Button(f_btns, text="Guardar Registro", command=self.guardar).pack(side="left", padx=5)
+        ttk.Button(f_btns, text="Eliminar Seleccionado", command=self.eliminar).pack(side="left", padx=5)
+        ttk.Button(f_btns, text="Refrescar Lista", command=self.cargar_datos).pack(side="right")
 
     def _build_form(self):
         for w in self.form_frame.winfo_children(): w.destroy()
         self.inputs = {}
-        # Obtener campos de la dataclass correspondiente
         cls = self.mapping[self.current_key]["class"]
         import dataclasses
-        for field in dataclasses.fields(cls):
-            # No mostramos campos autogenerados en el formulario de creación básica
-            if field.name.startswith('id_') and 'Optional' in str(field.type):
+        for f in dataclasses.fields(cls):
+            # No mostramos campos que suelen ser PK autogeneradas en el form de creación
+            if f.name.startswith('id_') and ('Optional' in str(f.type) or f.type == Optional[int]):
                 continue
-            ttk.Label(self.form_frame, text=field.name.upper()+":").pack(anchor="w")
-            ent = ttk.Entry(self.form_frame)
-            ent.pack(fill="x", pady=(0, 5))
-            self.inputs[field.name] = ent
+            ttk.Label(self.form_frame, text=f.name.upper()+":").pack(anchor="w")
+            e = ttk.Entry(self.form_frame)
+            e.pack(fill="x", pady=(0, 5))
+            self.inputs[f.name] = e
 
     def on_change_table(self, _):
         self.current_key = self.combo.get()
@@ -282,39 +347,46 @@ class AppHotel(tk.Tk):
     def cargar_datos(self):
         self.tree.delete(*self.tree.get_children())
         dao = self.mapping[self.current_key]["dao"]
-        datos = dao.listar()
-
-        if not datos: return
-        columnas = list(datos[0].keys())
-        self.tree["columns"] = columnas
-        for col in columnas:
-            self.tree.heading(col, text=col.upper())
-            self.tree.column(col, width=100)
-        for row in datos:
-            self.tree.insert("", "end", values=list(row.values()))
+        try:
+            datos = dao.listar()
+            if not datos: return
+            cols = list(datos[0].keys())
+            self.tree["columns"] = cols
+            for col in cols:
+                self.tree.heading(col, text=col.upper())
+                self.tree.column(col, width=110)
+            for row in datos:
+                self.tree.insert("", "end", values=list(row.values()))
+        except Exception as e:
+            messagebox.showerror("Error", f"Error de conexión: {e}")
 
     def guardar(self):
         try:
             cls = self.mapping[self.current_key]["class"]
             dao = self.mapping[self.current_key]["dao"]
-            
-            # Crear objeto desde formulario
             data = {k: v.get() for k, v in self.inputs.items()}
-            # Manejar nulos para campos opcionales
-            for k, v in data.items():
+            for k,v in data.items():
                 if v == "": data[k] = None
-            
-            obj = cls(**data)
-            dao.crear(obj)
+            dao.crear(cls(**data))
             self.cargar_datos()
-            messagebox.showinfo("Éxito", "Registro guardado correctamente")
+            messagebox.showinfo("OK", "Guardado")
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo guardar: {e}")
+            messagebox.showerror("Error", str(e))
+
+    def eliminar(self):
+        sel = self.tree.selection()
+        if not sel: return
+        pk = self.tree.item(sel[0], "values")[0]
+        dao = self.mapping[self.current_key]["dao"]
+        if messagebox.askyesno("Confirmar", f"¿Eliminar registro {pk}?"):
+            try:
+                dao.eliminar(pk)
+                self.cargar_datos()
+            except Exception as e:
+                messagebox.showerror("Error", f"No se puede eliminar (posible restricción de FK): {e}")
 
 if __name__ == "__main__":
-    # Registro de todas las tablas y sus DAOs
-    # Esto une el modelo, el DAO y la interfaz
-    tablas_hotel = {
+    tablas = {
         "persona": {"dao": PersonaDAO(), "class": Persona},
         "telefono": {"dao": TelefonoDAO(), "class": Telefono},
         "cliente": {"dao": ClienteDAO(), "class": Cliente},
@@ -324,6 +396,5 @@ if __name__ == "__main__":
         "servicio": {"dao": ServicioDAO(), "class": Servicio},
         "consumo": {"dao": ConsumoDAO(), "class": Consumo},
     }
-    
-    app = AppHotel(tablas_hotel)
+    app = AppHotel(tablas)
     app.mainloop()
