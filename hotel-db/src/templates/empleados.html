@@ -1,106 +1,77 @@
 {% extends "layout.html" %}
 {% block content %}
-{% if empleado_detalle %}
 <div class="row">
     <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header bg-info text-white">
-                Detalle de Empleado
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                {{ 'Actualizar Empleado' if empleado_editar else 'Registrar Empleado' }}
             </div>
             <div class="card-body">
-                <p><strong>ID Persona:</strong> {{ empleado_detalle.id_persona }}</p>
-                <p><strong>Nombre:</strong> {{ empleado_detalle.primer_nombre }} {{ empleado_detalle.primer_apellido }}</p>
-                <p><strong>Cargo:</strong> {{ empleado_detalle.cargo }}</p>
-                <p><strong>Área:</strong> {{ empleado_detalle.area }}</p>
-                <a href="/empleados" class="btn btn-outline-secondary btn-sm">Volver</a>
+                <form action="{{ '/empleados/actualizar/' ~ empleado_editar.id_persona if empleado_editar else '/empleados/guardar' }}" method="POST">
+                    <input type="number" name="id_persona" min="0" class="form-control mb-2" placeholder="ID Persona" value="{{ empleado_editar.id_persona if empleado_editar else '' }}" {% if empleado_editar %}readonly{% endif %} required>
+                    <input type="text" name="cargo" class="form-control mb-2" placeholder="Cargo (Ej: Recepcionista)" value="{{ empleado_editar.cargo if empleado_editar else '' }}" required>
+                    <input type="text" name="area" class="form-control mb-2" placeholder="Área (Ej: Ventas)" value="{{ empleado_editar.area if empleado_editar else '' }}" required>
+                    <button type="submit" class="btn btn-success w-100">{{ 'Actualizar' if empleado_editar else 'Contratar Empleado' }}</button>
+                    {% if empleado_editar %}
+                    <a href="/empleados" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
+                </form>
             </div>
         </div>
     </div>
     <div class="col-md-8">
-        <form action="/empleados" method="GET" class="input-group mb-3">
-            <input type="search" name="q" class="form-control" placeholder="Buscar empleado" value="{{ q or '' }}">
-            <button class="btn btn-outline-primary" type="submit">Buscar</button>
-            {% if q %}
-            <a href="/empleados" class="btn btn-outline-secondary">Limpiar</a>
+        <div class="table-responsive bg-white p-3 rounded shadow-sm">
+            {% if empleado_detalle %}
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    Detalle de Empleado
+                </div>
+                <div class="card-body">
+                    <p><strong>ID Persona:</strong> {{ empleado_detalle.id_persona }}</p>
+                    <p><strong>Nombre:</strong> {{ empleado_detalle.primer_nombre }} {{ empleado_detalle.primer_apellido }}</p>
+                    <p><strong>Cargo:</strong> {{empleado_detalle.cargo }}</p>
+                    <p><strong>Área:</strong> {{ empleado_detalle.area }}</p>
+                    <a href="/empleados" class="btn btn-outline-secondary btn-sm">Volver</a>
+                </div>
+            </div>
             {% endif %}
-        </form>
-        <table class="table bg-white">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Cargo</th>
-                    <th>Área</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for e in lista %}
-                {% set empleado_key = e.get('id_empleado') if e.get('id_empleado') is not none else e.id_persona %}
-                <tr>
-                    <td>{{ e.id_persona }}</td>
-                    <td>{{ e.cargo }}</td>
-                    <td>{{ e.area }}</td>
-                    <td>
-                        <a href="/empleados/buscar/{{ empleado_key }}" class="btn btn-sm btn-info">Ver</a>
-                        <a href="/empleados/editar/{{ empleado_key }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                        <a href="/eliminar/empleado/{{ empleado_key }}" class="btn btn-sm btn-danger">Despedir</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-</table>
+            <form action="/empleados" method="GET" class="input-group mb-3">
+                <input type="search" name="q" class="form-control" placeholder="Buscar empleado" value="{{ q or '' }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+                {% if q %}
+                <a href="/empleados" class="btn btn-outline-secondary">Limpiar</a>
+                {% endif %}
+            </form>
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cargo</th>
+                        <th>Área</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in lista %}
+                    {% set empleado_key = e.get('id_empleado') if e.get('id_empleado') is not none else e.id_persona %}
+                    <tr>
+                        <td>{{ e.id_persona }}</td>
+                        <td>{{ e.cargo }}</td>
+                        <td>{{ e.area }}</td>
+                        <td>
+                            <a href="/empleados/buscar/{{ empleado_key }}" class="btn btn-sm btn-info">Ver</a>
+                            <a href="/empleados/editar/{{ empleado_key }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a href="/eliminar/empleado/{{ empleado_key }}" class="btn btn-sm btn-danger">Despedir</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No se encontraron empleados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
-{% else %}
-<form action="/empleados" method="GET" class="input-group mb-3">
-    <input type="search" name="q" class="form-control" placeholder="Buscar empleado" value="{{ q or '' }}">
-    <button class="btn btn-outline-primary" type="submit">Buscar</button>
-    {% if q %}
-    <a href="/empleados" class="btn btn-outline-secondary">Limpiar</a>
-    {% endif %}
-</form>
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <form action="/empleados/guardar" method="POST" class="row g-3">
-            <div class="col-md-3">
-                <input type="number" name="id_persona" min="0" class="form-control" placeholder="ID Persona" required>
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="cargo" class="form-control" placeholder="Cargo (Ej: Recepcionista)" required>
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="area" class="form-control" placeholder="Área (Ej: Ventas)" required>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100">Contratar Empleado</button>
-            </div>
-        </form>
-    </div>
-</div>
-<table class="table bg-white">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cargo</th>
-            <th>Área</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for e in lista %}
-        {% set empleado_key = e.get('id_empleado') if e.get('id_empleado') is not none else e.id_persona %}
-        <tr>
-            <td>{{ e.id_persona }}</td>
-            <td>{{ e.cargo }}</td>
-            <td>{{ e.area }}</td>
-            <td>
-                <a href="/empleados/buscar/{{ empleado_key }}" class="btn btn-sm btn-info">Ver</a>
-                <a href="/empleados/editar/{{ empleado_key }}" class="btn btn-sm btn-outline-primary">Editar</a>
-                <a href="/eliminar/empleado/{{ empleado_key }}" class="btn btn-sm btn-danger">Despedir</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% endif %}
 {% endblock %}

@@ -232,7 +232,7 @@ def eliminar_telefono(id):
 # -----------------------------------------------------
 @app.route('/clientes')
 def clientes():
-    return render_crud('clientes.html', c_dao, cliente_editar=None)
+    return render_crud('clientes.html', c_dao)
 
 
 @app.route('/clientes/guardar', methods=['POST'])
@@ -252,25 +252,6 @@ def buscar_cliente(id):
     if not cliente:
         return redirect(url_for('clientes'))
     return render_template('clientes.html', lista=c_dao.listar(), q='', cliente_detalle=cliente)
-
-
-@app.route('/clientes/editar/<int:id>')
-def editar_cliente(id):
-    cliente = obtener_o_redirigir(c_dao, id, 'clientes', "No se encontró el cliente.")
-    if not cliente:
-        return redirect(url_for('clientes'))
-    return render_template('clientes.html', lista=c_dao.listar(), q='', cliente_editar=cliente)
-
-
-@app.route('/clientes/actualizar/<int:id>', methods=['POST'])
-def actualizar_cliente(id):
-    try:
-        c = Cliente(id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'))
-        c_dao.actualizar(id, c)
-        flash("Cliente actualizado", "success")
-    except Exception as err:
-        flash(f"Error: {err}", "danger")
-    return redirect(url_for('clientes'))
 
 
 @app.route('/eliminar/cliente/<int:id>')
