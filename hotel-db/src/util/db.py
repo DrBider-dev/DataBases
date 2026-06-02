@@ -4,12 +4,9 @@ import psycopg2
 from dotenv import load_dotenv
 from contextlib import contextmanager
 
-# Localizamos la carpeta raíz del proyecto
 base_dir = Path(__file__).resolve().parent.parent
-# Especificamos tu nombre de archivo personalizado: Raiz.env
 env_path = os.path.join(base_dir, 'Raiz.env')
 
-# Cargamos el archivo indicando la ruta exacta
 load_dotenv(dotenv_path=env_path)
 
 class DBConnection:
@@ -21,8 +18,7 @@ class DBConnection:
         self.password = os.getenv("DB_PASSWORD")
 
     @contextmanager
-    def get_connection(self):
-        # Verificación para confirmar que leyó el archivo Raiz.env
+    def get_connection(self, user=None, password=None):
         if not self.password:
             print(f"DEBUG: Intentando cargar desde: {env_path}")
             raise ValueError("Error: No se encontró la contraseña en Raiz.env. Verifica los nombres de las variables.")
@@ -31,13 +27,24 @@ class DBConnection:
             host=self.host,
             port=self.port,
             dbname=self.dbname,
-            user=self.user,
-            password=self.password
+            user=user or self.user,
+            password=password or self.password
         )
         conn.set_client_encoding('UTF8')
         try:
             yield conn
         finally:
             conn.close()
+
+    @contextmanager
+    def get_connection_role(self, username):
+        from auth import authenticate_user
+        auth_result = authenticate_user(username, os.getenv("DB_PASSWORD", "temp_password"))
+        if auth_result:
+            with self.get_connection(user=username, password=os.getenv("DB_PASSWORD", "temp_password")) as conn:
+                yield conn
+        else:
+            with self.get_connection() as conn:
+                yield conn
 
 db = DBConnection()

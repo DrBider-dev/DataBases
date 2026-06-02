@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container bg-white p-4 shadow-sm rounded">
+    <h3>Mis Reservas</h3>
+    <hr>
+    <p class="text-muted">Historial de reservas asociadas a su cuenta.</p>
+    
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>ID Reserva</th>
+                <th>Habitación</th>
+                <th>Fecha Llegada</th>
+                <th>Fecha Salida</th>
+                <th>Valor</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in lista %}
+            <tr>
+                <td>{{ r.id_reserva }}</td>
+                <td>{{ r.numero_h }}</td>
+                <td>{{ r.fecha_llegada }}</td>
+                <td>{{ r.fecha_salida }}</td>
+                <td>${{ r.valor_reserva }}</td>
+                <td><span class="badge bg-info">{{ r.estado_habitacion }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">No tiene reservas registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

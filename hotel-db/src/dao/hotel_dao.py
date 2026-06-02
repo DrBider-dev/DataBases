@@ -242,6 +242,14 @@ class HabitacionDAO:
                 _validar_actualizado(cur, "No existe una habitación con ese número.")
                 conn.commit()
 
+    def actualizar_estado(self, numero_h, nuevo_estado):
+        sql = "UPDATE hotel.habitacion SET estado = %s WHERE numero_h = %s;"
+        with db.get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, (nuevo_estado, numero_h))
+                _validar_actualizado(cur, "No existe una habitación con ese número.")
+                conn.commit()
+
     def eliminar(self, id):
         sql_consumos = """
             DELETE FROM hotel.consumo
@@ -594,6 +602,19 @@ class ReservaDAO:
                 cur.execute(sql_reserva, (id,))
                 conn.commit()
 
+    def buscar_por_cliente(self, id_cliente):
+        sql = """
+            SELECT r.*, p.primer_nombre, p.primer_apellido
+            FROM hotel.reserva r
+            JOIN hotel.persona p ON r.id_cliente = p.id_persona
+            WHERE r.id_cliente = %s
+            ORDER BY r.fecha_llegada DESC;
+        """
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql, (id_cliente,))
+                return cur.fetchall()
+
 
 class ServicioDAO:
     def listar(self):
@@ -703,3 +724,17 @@ class ConsumoDAO:
             with conn.cursor() as cur:
                 cur.execute(sql, (id,))
                 conn.commit()
+
+    def buscar_por_cliente(self, id_cliente):
+        sql = """
+            SELECT co.*, s.nombre as servicio_nombre
+            FROM hotel.consumo co
+            JOIN hotel.reserva r ON co.id_reserva = r.id_reserva
+            JOIN hotel.servicio s ON co.id_servicio = s.id_servicio
+            WHERE r.id_cliente = %s
+            ORDER BY co.fecha_hora DESC;
+        """
+        with db.get_connection() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql, (id_cliente,))
+                return cur.fetchall()

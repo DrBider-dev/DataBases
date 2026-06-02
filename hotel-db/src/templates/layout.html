@@ -9,16 +9,37 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
             <a class="navbar-brand" href="/">🏨 Hotel</a>
-            <div class="navbar-nav">
+            {% if session.user_id %}
+            <div class="navbar-nav me-auto">
+                {% if session.user_role == 'administrador' or session.user_role == 'gerente' %}
+                <a class="nav-link" href="/empleados">Empleados</a>
+                <a class="nav-link" href="/servicios">Servicios</a>
+                {% endif %}
+                {% if session.user_role == 'administrador' or session.user_role == 'recepcionista' %}
+                <a class="nav-link" href="/clientes">Clientes</a>
+                <a class="nav-link" href="/reservas">Reservas</a>
+                <a class="nav-link" href="/consumos">Consumos</a>
+                {% endif %}
+                {% if session.user_role == 'administrador' or session.user_role == 'empleado_limpieza' or session.user_role == 'recepcionista' %}
+                <a class="nav-link" href="/habitaciones">Habitaciones</a>
+                {% endif %}
+                {% if session.user_role == 'administrador' %}
                 <a class="nav-link" href="/personas">Personas</a>
                 <a class="nav-link" href="/telefonos">Teléfonos</a>
-                <a class="nav-link" href="/clientes">Clientes</a>
-                <a class="nav-link" href="/empleados">Empleados</a>
-                <a class="nav-link" href="/habitaciones">Habitaciones</a>
-                <a class="nav-link" href="/reservas">Reservas</a>
-                <a class="nav-link" href="/servicios">Servicios</a>
-                <a class="nav-link" href="/consumos">Consumos</a>
+                {% endif %}
+                {% if session.user_role == 'cliente_usuario' %}
+                <a class="nav-link" href="/mis/reservas">Mis Reservas</a>
+                {% endif %}
             </div>
+            <div class="navbar-nav">
+                <span class="navbar-text me-3">({{ session.user_role }})</span>
+                <a class="nav-link" href="/logout">Cerrar Sesión</a>
+            </div>
+            {% else %}
+            <div class="navbar-nav">
+                <a class="nav-link" href="/login">Iniciar Sesión</a>
+            </div>
+            {% endif %}
         </div>
     </nav>
     <div class="container">

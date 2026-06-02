@@ -1,0 +1,56 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container bg-white p-4 shadow-sm rounded">
+    <h3>Actualización de Estado de Habitaciones</h3>
+    <hr>
+    <p class="text-muted">Como empleado de limpieza, puede actualizar únicamente el estado de las habitaciones.</p>
+    
+    <form action="/habitaciones" method="GET" class="input-group mb-3">
+        <input type="search" name="q" class="form-control" placeholder="Buscar habitación" value="{{ q or '' }}">
+        <button class="btn btn-outline-primary" type="submit">Buscar</button>
+        {% if q %}
+        <a href="/habitaciones" class="btn btn-outline-secondary">Limpiar</a>
+        {% endif %}
+    </form>
+
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Número</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Precio/Noche</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in lista %}
+            <tr>
+                <td>{{ h.numero_h }}</td>
+                <td>{{ h.tipo }}</td>
+                <td>
+                    <span class="badge {% if h.estado == 'Disponible' %}bg-success{% elif h.estado == 'Ocupada' %}bg-warning{% else %}bg-info{% endif %}">
+                        {{ h.estado }}
+                    </span>
+                </td>
+                <td>${{ h.precio_noche }}</td>
+                <td>
+                    <form action="/habitaciones/actualizar/{{ h.numero_h }}" method="POST" class="d-inline">
+                        <select name="estado" class="form-select form-select-sm d-inline w-auto" onchange="this.form.submit()">
+                            <option value="Disponible" {% if h.estado == 'Disponible' %}selected{% endif %}>Disponible</option>
+                            <option value="Ocupada" {% if h.estado == 'Ocupada' %}selected{% endif %}>Ocupada</option>
+                            <option value="Mantenimiento" {% if h.estado == 'Mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                            <option value="Limpieza" {% if h.estado == 'Limpieza' %}selected{% endif %}>Limpieza</option>
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center text-muted">No se encontraron habitaciones.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

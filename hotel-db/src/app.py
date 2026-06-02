@@ -1,8 +1,14 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from dotenv import load_dotenv
+from auth import login_required, role_required, authenticate_user
+from util.db import db
 
-# Importación de DAOs y Entidades
+load_dotenv(dotenv_path='Raiz.env')
+
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "proyectohotel_secret_key")
+
 from dao.hotel_dao import (
     PersonaDAO, TelefonoDAO, ClienteDAO, EmpleadoDAO,
     HabitacionDAO, ReservaDAO, ServicioDAO, ConsumoDAO
@@ -12,13 +18,6 @@ from models.entities import (
     Habitacion, Reserva, Servicio, Consumo
 )
 
-# Forzamos la carga desde Raiz.env
-load_dotenv(dotenv_path='Raiz.env')
-
-app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "proyectohotel_secret_key")
-
-# Instanciación de todos los DAOs
 p_dao = PersonaDAO()
 t_dao = TelefonoDAO()
 c_dao = ClienteDAO()
@@ -34,10 +33,8 @@ def validar_entero_no_negativo(nombre_campo, etiqueta):
         valor = int(request.form[nombre_campo])
     except (KeyError, TypeError, ValueError):
         raise ValueError(f"{etiqueta} debe ser un número entero.")
-
     if valor < 0:
         raise ValueError(f"{etiqueta} no puede ser negativo.")
-
     return valor
 
 
@@ -46,10 +43,8 @@ def validar_decimal_no_negativo(nombre_campo, etiqueta):
         valor = float(request.form[nombre_campo])
     except (KeyError, TypeError, ValueError):
         raise ValueError(f"{etiqueta} debe ser un número.")
-
     if valor < 0:
         raise ValueError(f"{etiqueta} no puede ser negativo.")
-
     return valor
 
 
@@ -79,23 +74,48 @@ def obtener_o_redirigir(dao, id, endpoint, mensaje):
     return registro
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        auth = authenticate_user(username, password)
+        if auth:
+            session['user_id'] = username
+            session['user_role'] = auth['role']
+            flash(f'Bienvenido, {username}', 'success')
+            return redirect(url_for('index'))
+        flash('Credenciales inválidas', 'danger')
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Sesión cerrada correctamente', 'info')
+    return redirect(url_for('login'))
+
+
 # -----------------------------------------------------
 # INICIO
 # -----------------------------------------------------
 @app.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
 
 # -----------------------------------------------------
-# PERSONAS
+# PERSONAS - Solo administrador
 # -----------------------------------------------------
 @app.route('/personas')
+@login_required
 def personas():
     return render_crud('personas.html', p_dao, persona_editar=None)
 
 
 @app.route('/personas/guardar', methods=['POST'])
+@login_required
 def guardar_persona():
     try:
         p = Persona(
@@ -117,6 +137,7 @@ def guardar_persona():
 
 
 @app.route('/personas/buscar/<int:id>')
+@login_required
 def buscar_persona(id):
     persona = obtener_o_redirigir(p_dao, id, 'personas', "No se encontró la persona.")
     if not persona:
@@ -125,6 +146,7 @@ def buscar_persona(id):
 
 
 @app.route('/personas/editar/<int:id>')
+@login_required
 def editar_persona(id):
     persona = obtener_o_redirigir(p_dao, id, 'personas', "No se encontró la persona.")
     if not persona:
@@ -133,6 +155,7 @@ def editar_persona(id):
 
 
 @app.route('/personas/actualizar/<int:id>', methods=['POST'])
+@login_required
 def actualizar_persona(id):
     try:
         p = Persona(
@@ -154,6 +177,7 @@ def actualizar_persona(id):
 
 
 @app.route('/eliminar/persona/<int:id>')
+@login_required
 def eliminar_persona(id):
     try:
         p_dao.eliminar(id)
@@ -164,14 +188,16 @@ def eliminar_persona(id):
 
 
 # -----------------------------------------------------
-# TELÉFONOS
+# TELÉFONOS - Solo administrador
 # -----------------------------------------------------
 @app.route('/telefonos')
+@login_required
 def telefonos():
     return render_crud('telefonos.html', t_dao, telefono_editar=None)
 
 
 @app.route('/telefonos/guardar', methods=['POST'])
+@login_required
 def guardar_telefono():
     try:
         t = Telefono(
@@ -187,6 +213,7 @@ def guardar_telefono():
 
 
 @app.route('/telefonos/buscar/<int:id>')
+@login_required
 def buscar_telefono(id):
     telefono = obtener_o_redirigir(t_dao, id, 'telefonos', "No se encontró el teléfono.")
     if not telefono:
@@ -195,6 +222,7 @@ def buscar_telefono(id):
 
 
 @app.route('/telefonos/editar/<int:id>')
+@login_required
 def editar_telefono(id):
     telefono = obtener_o_redirigir(t_dao, id, 'telefonos', "No se encontró el teléfono.")
     if not telefono:
@@ -203,6 +231,7 @@ def editar_telefono(id):
 
 
 @app.route('/telefonos/actualizar/<int:id>', methods=['POST'])
+@login_required
 def actualizar_telefono(id):
     try:
         t = Telefono(
@@ -218,6 +247,7 @@ def actualizar_telefono(id):
 
 
 @app.route('/eliminar/telefono/<int:id>')
+@login_required
 def eliminar_telefono(id):
     try:
         t_dao.eliminar(id)
@@ -228,14 +258,18 @@ def eliminar_telefono(id):
 
 
 # -----------------------------------------------------
-# CLIENTES
+# CLIENTES - Gerente y Recepcionista
 # -----------------------------------------------------
 @app.route('/clientes')
+@login_required
+@role_required('gerente', 'recepcionista')
 def clientes():
     return render_crud('clientes.html', c_dao)
 
 
 @app.route('/clientes/guardar', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def guardar_cliente():
     try:
         c = Cliente(id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'))
@@ -247,6 +281,8 @@ def guardar_cliente():
 
 
 @app.route('/clientes/buscar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def buscar_cliente(id):
     cliente = obtener_o_redirigir(c_dao, id, 'clientes', "No se encontró el cliente.")
     if not cliente:
@@ -255,6 +291,8 @@ def buscar_cliente(id):
 
 
 @app.route('/eliminar/cliente/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def eliminar_cliente(id):
     try:
         c_dao.eliminar(id)
@@ -265,14 +303,18 @@ def eliminar_cliente(id):
 
 
 # -----------------------------------------------------
-# EMPLEADOS
+# EMPLEADOS - Solo Gerente
 # -----------------------------------------------------
 @app.route('/empleados')
+@login_required
+@role_required('gerente')
 def empleados():
     return render_crud('empleados.html', e_dao, empleado_editar=None)
 
 
 @app.route('/empleados/guardar', methods=['POST'])
+@login_required
+@role_required('gerente')
 def guardar_empleado():
     try:
         emp = Empleado(
@@ -288,6 +330,8 @@ def guardar_empleado():
 
 
 @app.route('/empleados/buscar/<int:id>')
+@login_required
+@role_required('gerente')
 def buscar_empleado(id):
     empleado = obtener_o_redirigir(e_dao, id, 'empleados', "No se encontró el empleado.")
     if not empleado:
@@ -296,6 +340,8 @@ def buscar_empleado(id):
 
 
 @app.route('/empleados/editar/<int:id>')
+@login_required
+@role_required('gerente')
 def editar_empleado(id):
     empleado = obtener_o_redirigir(e_dao, id, 'empleados', "No se encontró el empleado.")
     if not empleado:
@@ -304,6 +350,8 @@ def editar_empleado(id):
 
 
 @app.route('/empleados/actualizar/<int:id>', methods=['POST'])
+@login_required
+@role_required('gerente')
 def actualizar_empleado(id):
     try:
         emp = Empleado(
@@ -319,6 +367,8 @@ def actualizar_empleado(id):
 
 
 @app.route('/eliminar/empleado/<int:id>')
+@login_required
+@role_required('gerente')
 def eliminar_empleado(id):
     try:
         e_dao.eliminar(id)
@@ -329,14 +379,21 @@ def eliminar_empleado(id):
 
 
 # -----------------------------------------------------
-# HABITACIONES
+# HABITACIONES - Gerente, Recepcionista, Empleado limpieza
 # -----------------------------------------------------
 @app.route('/habitaciones')
+@login_required
 def habitaciones():
+    user_role = session.get('user_role')
+    if user_role == 'empleado_limpieza':
+        lista = h_dao.listar()
+        return render_template('habitaciones_limpieza.html', lista=lista, q='')
     return render_crud('habitaciones.html', h_dao, habitacion_editar=None)
 
 
 @app.route('/habitaciones/guardar', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def guardar_habitacion():
     try:
         h = Habitacion(
@@ -353,14 +410,18 @@ def guardar_habitacion():
 
 
 @app.route('/habitaciones/buscar/<int:id>')
-def buscar_habitacion(id):
+@login_required
+def habitacion_detalle(id):
     habitacion = obtener_o_redirigir(h_dao, id, 'habitaciones', "No se encontró la habitación.")
     if not habitacion:
         return redirect(url_for('habitaciones'))
-    return render_template('habitaciones.html', lista=h_dao.listar(), q='', habitacion_detalle=habitacion)
+    template = 'habitaciones_limpieza.html' if session.get('user_role') == 'empleado_limpieza' else 'habitaciones.html'
+    return render_template(template, lista=h_dao.listar(), q='', habitacion_detalle=habitacion)
 
 
 @app.route('/habitaciones/editar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def editar_habitacion(id):
     habitacion = obtener_o_redirigir(h_dao, id, 'habitaciones', "No se encontró la habitación.")
     if not habitacion:
@@ -369,22 +430,30 @@ def editar_habitacion(id):
 
 
 @app.route('/habitaciones/actualizar/<int:id>', methods=['POST'])
+@login_required
 def actualizar_habitacion(id):
+    user_role = session.get('user_role')
     try:
-        h = Habitacion(
-            numero_h=id,
-            tipo=request.form['tipo'],
-            estado=request.form['estado'],
-            precio_noche=validar_decimal_no_negativo('precio_noche', 'El precio por noche')
-        )
-        h_dao.actualizar(id, h)
-        flash("Habitación actualizada", "success")
+        if user_role == 'empleado_limpieza':
+            h_dao.actualizar_estado(id, request.form['estado'])
+            flash("Estado de habitación actualizado", "success")
+        else:
+            h = Habitacion(
+                numero_h=id,
+                tipo=request.form['tipo'],
+                estado=request.form['estado'],
+                precio_noche=validar_decimal_no_negativo('precio_noche', 'El precio por noche')
+            )
+            h_dao.actualizar(id, h)
+            flash("Habitación actualizada", "success")
     except Exception as err:
         flash(f"Error: {err}", "danger")
     return redirect(url_for('habitaciones'))
 
 
 @app.route('/eliminar/habitacion/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def eliminar_habitacion(id):
     try:
         h_dao.eliminar(id)
@@ -395,14 +464,18 @@ def eliminar_habitacion(id):
 
 
 # -----------------------------------------------------
-# RESERVAS
+# RESERVAS - Gerente y Recepcionista
 # -----------------------------------------------------
 @app.route('/reservas')
+@login_required
+@role_required('gerente', 'recepcionista')
 def reservas():
     return render_crud('reservas.html', r_dao, reserva_editar=None)
 
 
 @app.route('/reservas/guardar', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def guardar_reserva():
     try:
         res = Reserva(
@@ -422,6 +495,8 @@ def guardar_reserva():
 
 
 @app.route('/reservas/buscar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista', 'cliente_usuario')
 def buscar_reserva(id):
     reserva = obtener_o_redirigir(r_dao, id, 'reservas', "No se encontró la reserva.")
     if not reserva:
@@ -430,6 +505,8 @@ def buscar_reserva(id):
 
 
 @app.route('/reservas/editar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def editar_reserva(id):
     reserva = obtener_o_redirigir(r_dao, id, 'reservas', "No se encontró la reserva.")
     if not reserva:
@@ -438,6 +515,8 @@ def editar_reserva(id):
 
 
 @app.route('/reservas/actualizar/<int:id>', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def actualizar_reserva(id):
     try:
         res = Reserva(
@@ -457,6 +536,8 @@ def actualizar_reserva(id):
 
 
 @app.route('/eliminar/reserva/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def eliminar_reserva(id):
     try:
         r_dao.eliminar(id)
@@ -467,14 +548,30 @@ def eliminar_reserva(id):
 
 
 # -----------------------------------------------------
-# SERVICIOS
+# MIS RESERVAS - Cliente usuario
+# -----------------------------------------------------
+@app.route('/mis/reservas')
+@login_required
+@role_required('cliente_usuario')
+def mis_reservas():
+    user_id = session.get('user_id')
+    lista = r_dao.buscar_por_cliente(user_id) if user_id else []
+    return render_template('mis_reservas.html', lista=lista, q='')
+
+
+# -----------------------------------------------------
+# SERVICIOS - Solo Gerente
 # -----------------------------------------------------
 @app.route('/servicios')
+@login_required
+@role_required('gerente')
 def servicios():
     return render_crud('servicios.html', s_dao, servicio_editar=None)
 
 
 @app.route('/servicios/guardar', methods=['POST'])
+@login_required
+@role_required('gerente')
 def guardar_servicio():
     try:
         ser = Servicio(
@@ -492,6 +589,8 @@ def guardar_servicio():
 
 
 @app.route('/servicios/buscar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def buscar_servicio(id):
     servicio = obtener_o_redirigir(s_dao, id, 'servicios', "No se encontró el servicio.")
     if not servicio:
@@ -500,6 +599,8 @@ def buscar_servicio(id):
 
 
 @app.route('/servicios/editar/<int:id>')
+@login_required
+@role_required('gerente')
 def editar_servicio(id):
     servicio = obtener_o_redirigir(s_dao, id, 'servicios', "No se encontró el servicio.")
     if not servicio:
@@ -508,6 +609,8 @@ def editar_servicio(id):
 
 
 @app.route('/servicios/actualizar/<int:id>', methods=['POST'])
+@login_required
+@role_required('gerente')
 def actualizar_servicio(id):
     try:
         ser = Servicio(
@@ -525,6 +628,8 @@ def actualizar_servicio(id):
 
 
 @app.route('/eliminar/servicio/<int:id>')
+@login_required
+@role_required('gerente')
 def eliminar_servicio(id):
     try:
         s_dao.eliminar(id)
@@ -535,14 +640,18 @@ def eliminar_servicio(id):
 
 
 # -----------------------------------------------------
-# CONSUMOS
+# CONSUMOS - Gerente y Recepcionista
 # -----------------------------------------------------
 @app.route('/consumos')
+@login_required
+@role_required('gerente', 'recepcionista')
 def consumos():
     return render_crud('consumos.html', co_dao, consumo_editar=None)
 
 
 @app.route('/consumos/guardar', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def guardar_consumo():
     try:
         con = Consumo(
@@ -559,6 +668,8 @@ def guardar_consumo():
 
 
 @app.route('/consumos/buscar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def buscar_consumo(id):
     consumo = obtener_o_redirigir(co_dao, id, 'consumos', "No se encontró el consumo.")
     if not consumo:
@@ -567,6 +678,8 @@ def buscar_consumo(id):
 
 
 @app.route('/consumos/editar/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def editar_consumo(id):
     consumo = obtener_o_redirigir(co_dao, id, 'consumos', "No se encontró el consumo.")
     if not consumo:
@@ -575,6 +688,8 @@ def editar_consumo(id):
 
 
 @app.route('/consumos/actualizar/<int:id>', methods=['POST'])
+@login_required
+@role_required('gerente', 'recepcionista')
 def actualizar_consumo(id):
     try:
         con = Consumo(
@@ -591,6 +706,8 @@ def actualizar_consumo(id):
 
 
 @app.route('/eliminar/consumo/<int:id>')
+@login_required
+@role_required('gerente', 'recepcionista')
 def eliminar_consumo(id):
     try:
         co_dao.eliminar(id)
@@ -600,8 +717,14 @@ def eliminar_consumo(id):
     return redirect(url_for('consumos'))
 
 
-# -----------------------------------------------------
-# EJECUCIÓN
-# -----------------------------------------------------
+@app.route('/mis/consumos')
+@login_required
+@role_required('cliente_usuario')
+def mis_consumos():
+    user_id = session.get('user_id')
+    lista = co_dao.buscar_por_cliente(user_id) if user_id else []
+    return render_template('mis_consumos.html', lista=lista, q='')
+
+
 if __name__ == '__main__':
     app.run(debug=True)

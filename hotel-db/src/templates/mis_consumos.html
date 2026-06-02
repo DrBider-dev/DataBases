@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container bg-white p-4 shadow-sm rounded">
+    <h3>Mis Consumos</h3>
+    <hr>
+    <p class="text-muted">Historial de consumos de servicios durante su estancia.</p>
+    
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>ID Consumo</th>
+                <th>Servicio</th>
+                <th>Reserva</th>
+                <th>Fecha/Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in lista %}
+            <tr>
+                <td>{{ c.id_consumo }}</td>
+                <td>{{ c.servicio_nombre }}</td>
+                <td>{{ c.id_reserva }}</td>
+                <td>{{ c.fecha_hora or 'N/A' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center text-muted">No tiene consumos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
