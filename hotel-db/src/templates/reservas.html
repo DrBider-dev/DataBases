@@ -6,8 +6,8 @@
             <div class="card-header bg-success text-white fw-bold">Nueva Reserva</div>
             <div class="card-body">
                 <form action="/reservas/guardar" method="POST">
-                    <input type="number" name="id_cliente" class="form-control mb-2" placeholder="ID Cliente (Persona)" required>
-                    <input type="number" name="numero_h" class="form-control mb-2" placeholder="Número Habitación" required>
+                    <input type="number" name="id_cliente" min="0" class="form-control mb-2" placeholder="ID Cliente (Persona)" required>
+                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número Habitación" required>
                     <label class="small">Fecha Llegada:</label>
                     <input type="date" name="fecha_llegada" class="form-control mb-2" required>
                     <label class="small">Fecha Salida:</label>

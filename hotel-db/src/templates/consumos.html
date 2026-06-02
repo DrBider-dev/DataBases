@@ -7,9 +7,9 @@
             <div class="card-body">
                 <form action="/consumos/guardar" method="POST">
                     <label>ID Reserva:</label>
-                    <input type="number" name="id_reserva" class="form-control mb-2" required>
+                    <input type="number" name="id_reserva" min="0" class="form-control mb-2" required>
                     <label>ID Servicio:</label>
-                    <input type="number" name="id_servicio" class="form-control mb-2" required>
+                    <input type="number" name="id_servicio" min="0" class="form-control mb-2" required>
                     <button type="submit" class="btn btn-warning w-100">Registrar Cargo</button>
                 </form>
             </div>

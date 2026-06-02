@@ -6,7 +6,7 @@
             <div class="card-header bg-dark text-white">Nueva Habitación</div>
             <div class="card-body">
                 <form action="/habitaciones/guardar" method="POST">
-                    <input type="number" name="numero_h" class="form-control mb-2" placeholder="Número de Habitación" required>
+                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número de Habitación" required>
                     <select name="tipo" class="form-select mb-2">
                         <option value="Sencilla">Sencilla</option>
                         <option value="Doble">Doble</option>
@@ -31,6 +31,7 @@
                     <th>Tipo</th>
                     <th>Estado</th>
                     <th>Precio</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,8 +40,11 @@
                     <td>{{ h.numero_h }}</td>
                     <td><span class="badge bg-info">{{ h.tipo }}</span></td>
                     <td>{{ h.estado }}</td>
-                    <td>${{ h.precio_noche }}</td>
-                </tr>
+<td>${{ h.precio_noche }}</td>
+                        <td>
+                            <a href="/eliminar/habitacion/{{ h.numero_h }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar?')">🗑</a>
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

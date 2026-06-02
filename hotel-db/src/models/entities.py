@@ -59,4 +59,4 @@ class Consumo:
     id_consumo: Optional[int]
     id_reserva: int
     id_servicio: int
-    fecha_hora: str
+    fecha_hora: Optional[str] = None

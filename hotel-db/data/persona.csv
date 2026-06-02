@@ -1,8 +1,8 @@
 id_persona,primer_nombre,segundo_nombre,primer_apellido,segundo_apellido,email,calle,carrera,numero
-1,Juan,Carlos,Perez,Gomez,juan@email.com,Calle 10,Carrera 5,20-15
-2,Mari�a,Fernanda,Lopez,Ruiz,maria@email.com,Calle 15,Carrera 8,20-Oct
-3,Pedro,Andres,Ramirez,Diaz,pedro@email.com,Calle 20,Carrera 12,15-30
-4,Laura,Sofi�a,Garci�a,Martinez,laura@email.com,Calle 25,Carrera 7,18-12
-5,Camilo,Esteban,Torres,Moreno,camilo@email.com,Calle 8,Carrera 14,22-18
-6,Ana,Lucia,Castro,Vega,ana@email.com,Calle 3,Carrera 2,9-Nov
-7,Luis,Fernando,Herrera,Jimenez,luis@email.com,Calle 40,Carrera 9,33-44
+1012345678,Juan,Carlos,Pérez,Gómez,juan@email.com,Calle 10,Carrera 5,20-15
+1023456789,María,Fernanda,López,Ruiz,maria@email.com,Calle 15,Carrera 8,10-20
+1034567890,Pedro,Andrés,Ramírez,Díaz,pedro@email.com,Calle 20,Carrera 12,15-30
+1045678901,Laura,Sofía,García,Martínez,laura@email.com,Calle 25,Carrera 7,18-12
+1056789012,Camilo,Esteban,Torres,Moreno,camilo@email.com,Calle 8,Carrera 14,22-18
+1067890123,Ana,Lucía,Castro,Vega,ana@email.com,Calle 3,Carrera 2,11-09
+1078901234,Luis,Fernando,Herrera,Jiménez,luis@email.com,Calle 40,Carrera 9,33-44

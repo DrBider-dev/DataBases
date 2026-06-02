@@ -13,7 +13,8 @@ CREATE TABLE IF NOT EXISTS persona (
     email VARCHAR(120) NOT NULL UNIQUE,
     calle VARCHAR(100),
     carrera VARCHAR(100),
-    numero VARCHAR(20)
+    numero VARCHAR(20),
+    CONSTRAINT chk_persona_id_persona_no_negativo CHECK (id_persona >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS telefono (
@@ -22,14 +23,16 @@ CREATE TABLE IF NOT EXISTS telefono (
     telefono VARCHAR(20) NOT NULL,
     FOREIGN KEY (id_persona) REFERENCES persona(id_persona)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    UNIQUE (id_persona, telefono)
+    UNIQUE (id_persona, telefono),
+    CONSTRAINT chk_telefono_id_persona_no_negativo CHECK (id_persona >= 0)
 );
 
 -- El cliente usa exactamente el mismo id de persona
 CREATE TABLE IF NOT EXISTS cliente (
     id_persona BIGINT PRIMARY KEY,
     FOREIGN KEY (id_persona) REFERENCES persona(id_persona)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT chk_cliente_id_persona_no_negativo CHECK (id_persona >= 0)
 );
 
 -- El empleado usa exactamente el mismo id de persona
@@ -38,14 +41,16 @@ CREATE TABLE IF NOT EXISTS empleado (
     cargo VARCHAR(80) NOT NULL,
     area VARCHAR(80) NOT NULL,
     FOREIGN KEY (id_persona) REFERENCES persona(id_persona)
-        ON UPDATE CASCADE ON DELETE CASCADE
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT chk_empleado_id_persona_no_negativo CHECK (id_persona >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS habitacion (
     numero_h INT PRIMARY KEY,
     tipo VARCHAR(20) NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'Disponible',
-    precio_noche NUMERIC(10,2) NOT NULL
+    precio_noche NUMERIC(10,2) NOT NULL,
+    CONSTRAINT chk_habitacion_numero_h_no_negativo CHECK (numero_h >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS reserva (
@@ -56,8 +61,10 @@ CREATE TABLE IF NOT EXISTS reserva (
     fecha_salida DATE NOT NULL,
     valor_reserva NUMERIC(10,2) NOT NULL,
     tiempo_maxc INT NOT NULL,
-    FOREIGN KEY (id_cliente) REFERENCES cliente(id_persona),
-    FOREIGN KEY (numero_h) REFERENCES habitacion(numero_h)
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_persona) ON DELETE CASCADE,
+    FOREIGN KEY (numero_h) REFERENCES habitacion(numero_h) ON DELETE CASCADE,
+    CONSTRAINT chk_reserva_id_cliente_no_negativo CHECK (id_cliente >= 0),
+    CONSTRAINT chk_reserva_numero_h_no_negativo CHECK (numero_h >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS servicio (
@@ -73,6 +80,8 @@ CREATE TABLE IF NOT EXISTS consumo (
     id_reserva INT NOT NULL,
     id_servicio INT NOT NULL,
     fecha_hora TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
-    FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio)
+    FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva) ON DELETE CASCADE,
+    FOREIGN KEY (id_servicio) REFERENCES servicio(id_servicio) ON DELETE CASCADE,
+    CONSTRAINT chk_consumo_id_reserva_no_negativo CHECK (id_reserva >= 0),
+    CONSTRAINT chk_consumo_id_servicio_no_negativo CHECK (id_servicio >= 0)
 );

@@ -28,6 +28,17 @@ r_dao = ReservaDAO()
 s_dao = ServicioDAO()
 co_dao = ConsumoDAO()
 
+def validar_entero_no_negativo(nombre_campo, etiqueta):
+    try:
+        valor = int(request.form[nombre_campo])
+    except (KeyError, TypeError, ValueError):
+        raise ValueError(f"{etiqueta} debe ser un número entero.")
+
+    if valor < 0:
+        raise ValueError(f"{etiqueta} no puede ser negativo.")
+
+    return valor
+
 # -----------------------------------------------------
 # INICIO
 # -----------------------------------------------------
@@ -46,7 +57,7 @@ def personas():
 def guardar_persona():
     try:
         p = Persona(
-            id_persona=int(request.form['id_persona']),
+            id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'),
             primer_nombre=request.form['primer_nombre'],
             primer_apellido=request.form['primer_apellido'],
             email=request.form['email'],
@@ -64,8 +75,11 @@ def guardar_persona():
 
 @app.route('/eliminar/persona/<int:id>')
 def eliminar_persona(id):
-    p_dao.eliminar(id)
-    flash("Persona eliminada", "warning")
+    try:
+        p_dao.eliminar(id)
+        flash("Persona eliminada", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('personas'))
 
 # -----------------------------------------------------
@@ -80,7 +94,7 @@ def guardar_telefono():
     try:
         t = Telefono(
             id_telefono=None,
-            id_persona=int(request.form['id_persona']),
+            id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'),
             telefono=request.form['telefono']
         )
         t_dao.crear(t)
@@ -91,7 +105,11 @@ def guardar_telefono():
 
 @app.route('/eliminar/telefono/<int:id>')
 def eliminar_telefono(id):
-    t_dao.eliminar(id)
+    try:
+        t_dao.eliminar(id)
+        flash("Teléfono eliminado", "success")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('telefonos'))
 
 # -----------------------------------------------------
@@ -104,7 +122,7 @@ def clientes():
 @app.route('/clientes/guardar', methods=['POST'])
 def guardar_cliente():
     try:
-        c = Cliente(id_persona=int(request.form['id_persona']))
+        c = Cliente(id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'))
         c_dao.crear(c)
         flash("Cliente registrado", "success")
     except Exception as err:
@@ -113,7 +131,11 @@ def guardar_cliente():
 
 @app.route('/eliminar/cliente/<int:id>')
 def eliminar_cliente(id):
-    c_dao.eliminar(id)
+    try:
+        c_dao.eliminar(id)
+        flash("Cliente eliminado", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('clientes'))
 
 # -----------------------------------------------------
@@ -127,7 +149,7 @@ def empleados():
 def guardar_empleado():
     try:
         emp = Empleado(
-            id_persona=int(request.form['id_persona']),
+            id_persona=validar_entero_no_negativo('id_persona', 'El ID de la persona'),
             cargo=request.form['cargo'],
             area=request.form['area']
         )
@@ -139,7 +161,11 @@ def guardar_empleado():
 
 @app.route('/eliminar/empleado/<int:id>')
 def eliminar_empleado(id):
-    e_dao.eliminar(id)
+    try:
+        e_dao.eliminar(id)
+        flash("Empleado eliminado", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('empleados'))
 
 # -----------------------------------------------------
@@ -153,7 +179,7 @@ def habitaciones():
 def guardar_habitacion():
     try:
         h = Habitacion(
-            numero_h=int(request.form['numero_h']),
+            numero_h=validar_entero_no_negativo('numero_h', 'El número de habitación'),
             tipo=request.form['tipo'],
             estado=request.form['estado'],
             precio_noche=float(request.form['precio_noche'])
@@ -166,7 +192,11 @@ def guardar_habitacion():
 
 @app.route('/eliminar/habitacion/<int:id>')
 def eliminar_habitacion(id):
-    h_dao.eliminar(id)
+    try:
+        h_dao.eliminar(id)
+        flash("Habitación eliminada", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('habitaciones'))
 
 # -----------------------------------------------------
@@ -181,8 +211,8 @@ def guardar_reserva():
     try:
         res = Reserva(
             id_reserva=None,
-            id_cliente=int(request.form['id_cliente']),
-            numero_h=int(request.form['numero_h']),
+            id_cliente=validar_entero_no_negativo('id_cliente', 'El ID del cliente'),
+            numero_h=validar_entero_no_negativo('numero_h', 'El número de habitación'),
             fecha_llegada=request.form['fecha_llegada'],
             fecha_salida=request.form['fecha_salida'],
             valor_reserva=float(request.form['valor_reserva']),
@@ -196,7 +226,11 @@ def guardar_reserva():
 
 @app.route('/eliminar/reserva/<int:id>')
 def eliminar_reserva(id):
-    r_dao.eliminar(id)
+    try:
+        r_dao.eliminar(id)
+        flash("Reserva eliminada", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('reservas'))
 
 # -----------------------------------------------------
@@ -224,7 +258,11 @@ def guardar_servicio():
 
 @app.route('/eliminar/servicio/<int:id>')
 def eliminar_servicio(id):
-    s_dao.eliminar(id)
+    try:
+        s_dao.eliminar(id)
+        flash("Servicio eliminado", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('servicios'))
 
 # -----------------------------------------------------
@@ -239,8 +277,8 @@ def guardar_consumo():
     try:
         con = Consumo(
             id_consumo=None,
-            id_reserva=int(request.form['id_reserva']),
-            id_servicio=int(request.form['id_servicio'])
+            id_reserva=validar_entero_no_negativo('id_reserva', 'El ID de la reserva'),
+            id_servicio=validar_entero_no_negativo('id_servicio', 'El ID del servicio')
         )
         co_dao.crear(con)
         flash("Consumo cargado", "success")
@@ -250,7 +288,11 @@ def guardar_consumo():
 
 @app.route('/eliminar/consumo/<int:id>')
 def eliminar_consumo(id):
-    co_dao.eliminar(id)
+    try:
+        co_dao.eliminar(id)
+        flash("Consumo eliminado", "warning")
+    except Exception as err:
+        flash(f"Error: {err}", "danger")
     return redirect(url_for('consumos'))
 
 # -----------------------------------------------------

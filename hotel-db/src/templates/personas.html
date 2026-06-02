@@ -6,7 +6,7 @@
             <div class="card-header bg-primary text-white">Registrar Persona</div>
             <div class="card-body">
                 <form action="/personas/guardar" method="POST">
-                    <input type="number" name="id_persona" class="form-control mb-2" placeholder="Cédula/ID" required>
+                    <input type="number" name="id_persona" min="0" class="form-control mb-2" placeholder="Cédula/ID" required>
                     <input type="text" name="primer_nombre" class="form-control mb-2" placeholder="Primer Nombre" required>
                     <input type="text" name="primer_apellido" class="form-control mb-2" placeholder="Primer Apellido" required>
                     <input type="email" name="email" class="form-control mb-2" placeholder="Correo Electrónico" required>
@@ -35,7 +35,7 @@
                         <td>{{ p.primer_nombre }} {{ p.primer_apellido }}</td>
                         <td>{{ p.email }}</td>
                         <td>
-                            <a href="/personas/eliminar/{{ p.id_persona }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar?')">🗑</a>
+                            <a href="/eliminar/persona/{{ p.id_persona }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar?')">🗑</a>
                         </td>
                     </tr>
                     {% endfor %}

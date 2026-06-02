@@ -1,4 +1,4 @@
-id_empleado,id_persona,cargo,area
-1,2,Recepcionista,Recepcion
-2,6,Administrador,Administracion
-3,7,Botones,Servicio
+id_persona,cargo,area
+1023456789,Recepcionista,Recepción
+1067890123,Administrador,Administración
+1078901234,Botones,Servicio

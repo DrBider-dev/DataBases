@@ -7,7 +7,7 @@
             <div class="card-body">
                 <form action="/telefonos/guardar" method="POST">
                     <label class="form-label">ID Persona (Dueño):</label>
-                    <input type="number" name="id_persona" class="form-control mb-3" placeholder="Ej: 1020..." required>
+                    <input type="number" name="id_persona" min="0" class="form-control mb-3" placeholder="Ej: 1020..." required>
                     <label class="form-label">Número de Teléfono:</label>
                     <input type="text" name="telefono" class="form-control mb-3" placeholder="Ej: 300123..." required>
                     <button type="submit" class="btn btn-secondary w-100">Vincular Teléfono</button>
