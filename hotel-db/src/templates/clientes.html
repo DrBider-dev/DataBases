@@ -1,24 +1,75 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="container bg-white p-4 shadow-sm rounded">
+    {% if cliente_detalle %}
+    {% set detalle_key = cliente_detalle.get('id_cliente') if cliente_detalle.get('id_cliente') is not none else cliente_detalle.id_persona %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    Detalle de Cliente
+                </div>
+                <div class="card-body">
+                    <p><strong>ID Registro:</strong> {{ cliente_detalle.get('id_cliente') if cliente_detalle.get('id_cliente') is not none else '-' }}</p>
+                    <p><strong>ID Persona:</strong> {{ cliente_detalle.id_persona }}</p>
+                    <p><strong>Nombre:</strong> {{ cliente_detalle.primer_nombre }} {{ cliente_detalle.primer_apellido }}</p>
+                    <a href="/clientes" class="btn btn-outline-secondary btn-sm">Volver</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+    {% endif %}
     <h3>Gestión de Clientes</h3>
     <hr>
-    <form action="/clientes/guardar" method="POST" class="input-group mb-4">
-        <input type="number" name="id_persona" min="0" class="form-control" placeholder="Ingrese ID de la persona para volverla cliente" required>
-        <button class="btn btn-success" type="submit">Hacer Cliente</button>
+    {% if cliente_editar %}
+    {% set cliente_edit_key = cliente_editar.get('id_cliente') if cliente_editar.get('id_cliente') is not none else cliente_editar.id_persona %}
+    {% endif %}
+    <form action="{{ '/clientes/actualizar/' ~ cliente_edit_key if cliente_editar else '/clientes/guardar' }}" method="POST" class="input-group mb-4">
+        <input type="number" name="id_persona" min="0" class="form-control" placeholder="Ingrese ID de la persona para volverla cliente" value="{{ cliente_editar.id_persona if cliente_editar else '' }}" required>
+        <button class="btn btn-success" type="submit">{{ 'Actualizar Cliente' if cliente_editar else 'Hacer Cliente' }}</button>
+        {% if cliente_editar %}
+        <a href="/clientes" class="btn btn-outline-secondary">Cancelar</a>
+        {% endif %}
     </form>
-    <table class="table">
+
+    <form action="/clientes" method="GET" class="input-group mb-3">
+        <input type="search" name="q" class="form-control" placeholder="Buscar cliente" value="{{ q or '' }}">
+        <button class="btn btn-outline-primary" type="submit">Buscar</button>
+        {% if q %}
+        <a href="/clientes" class="btn btn-outline-secondary">Limpiar</a>
+        {% endif %}
+    </form>
+
+    <table class="table align-middle">
         <thead>
-            <tr><th>ID Persona</th><th>Acción</th></tr>
+            <tr>
+                <th>ID Registro</th>
+                <th>ID Persona</th>
+                <th>Acciones</th>
+            </tr>
         </thead>
         <tbody>
             {% for c in lista %}
+            {% set cliente_key = c.get('id_cliente') if c.get('id_cliente') is not none else c.id_persona %}
             <tr>
+                <td>{{ c.get('id_cliente') if c.get('id_cliente') is not none else '-' }}</td>
                 <td>{{ c.id_persona }}</td>
-                <td><a href="/eliminar/cliente/{{ c.id_persona }}" class="btn btn-sm btn-outline-danger">Quitar</a></td>
+                <td>
+                    <a href="/clientes/buscar/{{ cliente_key }}" class="btn btn-sm btn-info">Ver</a>
+                    <a href="/clientes/editar/{{ cliente_key }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                    <a href="/eliminar/cliente/{{ cliente_key }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Quitar cliente?')">Quitar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="text-center text-muted">No se encontraron clientes.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% if cliente_detalle %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

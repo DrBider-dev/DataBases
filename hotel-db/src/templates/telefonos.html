@@ -3,28 +3,57 @@
 <div class="row">
     <div class="col-md-4">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-secondary text-white fw-bold">Agregar Teléfono</div>
+            <div class="card-header bg-secondary text-white fw-bold">
+                {{ 'Actualizar Teléfono' if telefono_editar else 'Agregar Teléfono' }}
+            </div>
             <div class="card-body">
-                <form action="/telefonos/guardar" method="POST">
+                <form action="{{ '/telefonos/actualizar/' ~ telefono_editar.id_telefono if telefono_editar else '/telefonos/guardar' }}" method="POST">
+                    {% if telefono_editar %}
+                    <label class="form-label">ID Registro:</label>
+                    <input type="number" class="form-control mb-3" value="{{ telefono_editar.id_telefono }}" readonly>
+                    {% endif %}
                     <label class="form-label">ID Persona (Dueño):</label>
-                    <input type="number" name="id_persona" min="0" class="form-control mb-3" placeholder="Ej: 1020..." required>
+                    <input type="number" name="id_persona" min="0" class="form-control mb-3" placeholder="Ej: 1020..." value="{{ telefono_editar.id_persona if telefono_editar else '' }}" required>
                     <label class="form-label">Número de Teléfono:</label>
-                    <input type="text" name="telefono" class="form-control mb-3" placeholder="Ej: 300123..." required>
-                    <button type="submit" class="btn btn-secondary w-100">Vincular Teléfono</button>
+                    <input type="text" name="telefono" class="form-control mb-3" placeholder="Ej: 300123..." value="{{ telefono_editar.telefono if telefono_editar else '' }}" required>
+                    <button type="submit" class="btn btn-secondary w-100">{{ 'Actualizar Teléfono' if telefono_editar else 'Vincular Teléfono' }}</button>
+                    {% if telefono_editar %}
+                    <a href="/telefonos" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
     <div class="col-md-8">
         <div class="bg-white p-3 rounded shadow-sm">
+            {% if telefono_detalle %}
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    Detalle de Teléfono
+                </div>
+                <div class="card-body">
+                    <p><strong>ID Registro:</strong> {{ telefono_detalle.id_telefono }}</p>
+                    <p><strong>ID Persona:</strong> {{ telefono_detalle.id_persona }}</p>
+                    <p><strong>Teléfono:</strong> {{ telefono_detalle.telefono }}</p>
+                    <a href="/telefonos" class="btn btn-outline-secondary btn-sm">Volver</a>
+                </div>
+            </div>
+            {% endif %}
             <h4 class="mb-3">Lista de Teléfonos</h4>
-            <table class="table table-hover">
+            <form action="/telefonos" method="GET" class="input-group mb-3">
+                <input type="search" name="q" class="form-control" placeholder="Buscar teléfono" value="{{ q or '' }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+                {% if q %}
+                <a href="/telefonos" class="btn btn-outline-secondary">Limpiar</a>
+                {% endif %}
+            </form>
+            <table class="table table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
                         <th>ID Registro</th>
                         <th>ID Persona</th>
                         <th>Teléfono</th>
-                        <th>Acción</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -34,8 +63,14 @@
                         <td>{{ t.id_persona }}</td>
                         <td>{{ t.telefono }}</td>
                         <td>
-                            <a href="/eliminar/telefono/{{ t.id_telefono }}" class="btn btn-outline-danger btn-sm">Eliminar</a>
+                            <a href="/telefonos/buscar/{{ t.id_telefono }}" class="btn btn-info btn-sm">Ver</a>
+                            <a href="/telefonos/editar/{{ t.id_telefono }}" class="btn btn-outline-primary btn-sm">Editar</a>
+                            <a href="/eliminar/telefono/{{ t.id_telefono }}" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar?')">Eliminar</a>
                         </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No se encontraron teléfonos.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

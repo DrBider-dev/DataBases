@@ -1,21 +1,50 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row">
+    {% if consumo_detalle %}
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-warning">Registrar Consumo</div>
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                Detalle de Consumo
+            </div>
             <div class="card-body">
-                <form action="/consumos/guardar" method="POST">
+                <p><strong>ID Consumo:</strong> {{ consumo_detalle.id_consumo }}</p>
+                <p><strong>ID Reserva:</strong> {{ consumo_detalle.id_reserva }}</p>
+                <p><strong>ID Servicio:</strong> {{ consumo_detalle.id_servicio }}</p>
+                <p><strong>Fecha/Hora:</strong> {{ consumo_detalle.fecha_hora }}</p>
+                <a href="/consumos" class="btn btn-outline-secondary btn-sm">Volver</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="{% if consumo_detalle %}col-md-4{% else %}col-md-4{% endif %}">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning">{{ 'Actualizar Consumo' if consumo_editar else 'Registrar Consumo' }}</div>
+            <div class="card-body">
+                {% if consumo_editar %}
+                {% set consumo_key = consumo_editar.id_consumo %}
+                {% endif %}
+                <form action="{{ '/consumos/actualizar/' ~ consumo_key if consumo_editar else '/consumos/guardar' }}" method="POST">
                     <label>ID Reserva:</label>
-                    <input type="number" name="id_reserva" min="0" class="form-control mb-2" required>
+                    <input type="number" name="id_reserva" min="0" class="form-control mb-2" value="{{ consumo_editar.id_reserva if consumo_editar else '' }}" required>
                     <label>ID Servicio:</label>
-                    <input type="number" name="id_servicio" min="0" class="form-control mb-2" required>
-                    <button type="submit" class="btn btn-warning w-100">Registrar Cargo</button>
+                    <input type="number" name="id_servicio" min="0" class="form-control mb-2" value="{{ consumo_editar.id_servicio if consumo_editar else '' }}" required>
+                    <button type="submit" class="btn btn-warning w-100">{{ 'Actualizar' if consumo_editar else 'Registrar Cargo' }}</button>
+                    {% if consumo_editar %}
+                    <a href="/consumos" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
-    <div class="col-md-8">
+    <div class="{% if consumo_detalle %}col-md-8{% else %}col-md-8{% endif %}">
+        <form action="/consumos" method="GET" class="input-group mb-3">
+            <input type="search" name="q" class="form-control" placeholder="Buscar consumo" value="{{ q or '' }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+            {% if q %}
+            <a href="/consumos" class="btn btn-outline-secondary">Limpiar</a>
+            {% endif %}
+        </form>
         <table class="table table-striped bg-white shadow-sm p-3">
             <thead>
                 <tr>
@@ -33,7 +62,11 @@
                     <td>{{ c.id_reserva }}</td>
                     <td>{{ c.id_servicio }}</td>
                     <td>{{ c.fecha_hora }}</td>
-                    <td><a href="/eliminar/consumo/{{ c.id_consumo }}" class="btn btn-danger btn-sm">X</a></td>
+                    <td>
+                        <a href="/consumos/buscar/{{ c.id_consumo }}" class="btn btn-sm btn-info">Ver</a>
+                        <a href="/consumos/editar/{{ c.id_consumo }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="/eliminar/consumo/{{ c.id_consumo }}" class="btn btn-danger btn-sm">X</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

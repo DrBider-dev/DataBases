@@ -1,29 +1,55 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row">
+    {% if habitacion_detalle %}
     <div class="col-md-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-dark text-white">Nueva Habitación</div>
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                Detalle de Habitación
+            </div>
             <div class="card-body">
-                <form action="/habitaciones/guardar" method="POST">
-                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número de Habitación" required>
+                <p><strong>Número:</strong> {{ habitacion_detalle.numero_h }}</p>
+                <p><strong>Tipo:</strong> {{ habitacion_detalle.tipo }}</p>
+                <p><strong>Estado:</strong> {{ habitacion_detalle.estado }}</p>
+                <p><strong>Precio:</strong> ${{ habitacion_detalle.precio_noche }}</p>
+                <a href="/habitaciones" class="btn btn-outline-secondary btn-sm">Volver</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="{% if habitacion_detalle %}col-md-4{% else %}col-md-4{% endif %}">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">{{ 'Actualizar Habitación' if habitacion_editar else 'Nueva Habitación' }}</div>
+            <div class="card-body">
+                <form action="{{ '/habitaciones/actualizar/' ~ habitacion_editar.numero_h if habitacion_editar else '/habitaciones/guardar' }}" method="POST">
+                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número de Habitación" value="{{ habitacion_editar.numero_h if habitacion_editar else '' }}" {% if habitacion_editar %}readonly{% endif %} required>
                     <select name="tipo" class="form-select mb-2">
-                        <option value="Sencilla">Sencilla</option>
-                        <option value="Doble">Doble</option>
-                        <option value="Suite">Suite</option>
+                        <option value="Sencilla" {% if habitacion_editar and habitacion_editar.tipo == 'Sencilla' %}selected{% endif %}>Sencilla</option>
+                        <option value="Doble" {% if habitacion_editar and habitacion_editar.tipo == 'Doble' %}selected{% endif %}>Doble</option>
+                        <option value="Suite" {% if habitacion_editar and habitacion_editar.tipo == 'Suite' %}selected{% endif %}>Suite</option>
                     </select>
                     <select name="estado" class="form-select mb-2">
-                        <option value="Disponible">Disponible</option>
-                        <option value="Ocupada">Ocupada</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
+                        <option value="Disponible" {% if habitacion_editar and habitacion_editar.estado == 'Disponible' %}selected{% endif %}>Disponible</option>
+                        <option value="Ocupada" {% if habitacion_editar and habitacion_editar.estado == 'Ocupada' %}selected{% endif %}>Ocupada</option>
+                        <option value="Mantenimiento" {% if habitacion_editar and habitacion_editar.estado == 'Mantenimiento' %}selected{% endif %}>Mantenimiento</option>
                     </select>
-                    <input type="number" step="0.01" name="precio_noche" class="form-control mb-2" placeholder="Precio por Noche" required>
-                    <button type="submit" class="btn btn-dark w-100">Registrar</button>
+                    <input type="number" step="0.01" name="precio_noche" class="form-control mb-2" placeholder="Precio por Noche" value="{{ habitacion_editar.precio_noche if habitacion_editar else '' }}" required>
+                    <button type="submit" class="btn btn-dark w-100">{{ 'Actualizar' if habitacion_editar else 'Registrar' }}</button>
+                    {% if habitacion_editar %}
+                    <a href="/habitaciones" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
-    <div class="col-md-8">
+    <div class="{% if habitacion_detalle %}col-md-8{% else %}col-md-8{% endif %}">
+        <form action="/habitaciones" method="GET" class="input-group mb-3">
+            <input type="search" name="q" class="form-control" placeholder="Buscar habitación" value="{{ q or '' }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+            {% if q %}
+            <a href="/habitaciones" class="btn btn-outline-secondary">Limpiar</a>
+            {% endif %}
+        </form>
         <table class="table bg-white p-3 rounded shadow-sm">
             <thead>
                 <tr>
@@ -40,11 +66,13 @@
                     <td>{{ h.numero_h }}</td>
                     <td><span class="badge bg-info">{{ h.tipo }}</span></td>
                     <td>{{ h.estado }}</td>
-<td>${{ h.precio_noche }}</td>
-                        <td>
-                            <a href="/eliminar/habitacion/{{ h.numero_h }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar?')">🗑</a>
-                        </td>
-                    </tr>
+                    <td>${{ h.precio_noche }}</td>
+                    <td>
+                        <a href="/habitaciones/buscar/{{ h.numero_h }}" class="btn btn-sm btn-info">Ver</a>
+                        <a href="/habitaciones/editar/{{ h.numero_h }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="/eliminar/habitacion/{{ h.numero_h }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar?')">🗑</a>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

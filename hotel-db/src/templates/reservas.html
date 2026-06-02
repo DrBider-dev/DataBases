@@ -1,26 +1,93 @@
 {% extends "layout.html" %}
 {% block content %}
+{% if reserva_detalle %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                Detalle de Reserva
+            </div>
+            <div class="card-body">
+                <p><strong>ID:</strong> {{ reserva_detalle.id_reserva }}</p>
+                <p><strong>Cliente:</strong> {{ reserva_detalle.primer_nombre }} {{ reserva_detalle.primer_apellido }}</p>
+                <p><strong>ID Cliente:</strong> {{ reserva_detalle.id_cliente if reserva_detalle.get('id_cliente') is not none else reserva_detalle.id_cliente }}</p>
+                <p><strong>Habitación:</strong> {{ reserva_detalle.numero_h }}</p>
+                <p><strong>Entrada:</strong> {{ reserva_detalle.fecha_llegada }}</p>
+                <p><strong>Salida:</strong> {{ reserva_detalle.fecha_salida }}</p>
+                <p><strong>Valor:</strong> ${{ reserva_detalle.valor_reserva }}</p>
+                <p><strong>Tiempo Máx:</strong> {{ reserva_detalle.tiempo_maxc }} min</p>
+                <a href="/reservas" class="btn btn-outline-secondary btn-sm">Volver</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <table class="table table-sm bg-white p-3 rounded shadow-sm">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Cliente</th>
+                    <th>Hab.</th>
+                    <th>Entrada</th>
+                    <th>Salida</th>
+                    <th>Valor</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in lista %}
+                <tr>
+                    <td>{{ r.id_reserva }}</td>
+                    <td>{{ r.id_cliente }}</td>
+                    <td>{{ r.numero_h }}</td>
+                    <td>{{ r.fecha_llegada }}</td>
+                    <td>{{ r.fecha_salida }}</td>
+                    <td>${{ r.valor_reserva }}</td>
+                    <td>
+                        <a href="/reservas/buscar/{{ r.id_reserva }}" class="btn btn-sm btn-info">Ver</a>
+                        <a href="/reservas/editar/{{ r.id_reserva }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <a href="/eliminar/reserva/{{ r.id_reserva }}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
 <div class="row">
     <div class="col-md-4">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-success text-white fw-bold">Nueva Reserva</div>
+            <div class="card-header bg-success text-white fw-bold">{{ 'Actualizar Reserva' if reserva_editar else 'Nueva Reserva' }}</div>
             <div class="card-body">
-                <form action="/reservas/guardar" method="POST">
-                    <input type="number" name="id_cliente" min="0" class="form-control mb-2" placeholder="ID Cliente (Persona)" required>
-                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número Habitación" required>
+                {% if reserva_editar %}
+                {% set reserva_key = reserva_editar.id_reserva %}
+                {% endif %}
+                <form action="{{ '/reservas/actualizar/' ~ reserva_key if reserva_editar else '/reservas/guardar' }}" method="POST">
+                    <input type="number" name="id_cliente" min="0" class="form-control mb-2" placeholder="ID Cliente (Persona)" value="{{ reserva_editar.id_cliente if reserva_editar else '' }}" required>
+                    <input type="number" name="numero_h" min="0" class="form-control mb-2" placeholder="Número Habitación" value="{{ reserva_editar.numero_h if reserva_editar else '' }}" required>
                     <label class="small">Fecha Llegada:</label>
-                    <input type="date" name="fecha_llegada" class="form-control mb-2" required>
+                    <input type="date" name="fecha_llegada" class="form-control mb-2" value="{{ reserva_editar.fecha_llegada if reserva_editar else '' }}" required>
                     <label class="small">Fecha Salida:</label>
-                    <input type="date" name="fecha_salida" class="form-control mb-2" required>
-                    <input type="number" step="0.01" name="valor_reserva" class="form-control mb-2" placeholder="Valor Total" required>
-                    <input type="number" name="tiempo_maxc" class="form-control mb-2" placeholder="Tiempo Max. (minutos)" required>
-                    <button type="submit" class="btn btn-success w-100">Confirmar Reserva</button>
+                    <input type="date" name="fecha_salida" class="form-control mb-2" value="{{ reserva_editar.fecha_salida if reserva_editar else '' }}" required>
+                    <input type="number" step="0.01" name="valor_reserva" class="form-control mb-2" placeholder="Valor Total" value="{{ reserva_editar.valor_reserva if reserva_editar else '' }}" required>
+                    <input type="number" name="tiempo_maxc" class="form-control mb-2" placeholder="Tiempo Max. (minutos)" value="{{ reserva_editar.tiempo_maxc if reserva_editar else '' }}" required>
+                    <button type="submit" class="btn btn-success w-100">{{ 'Actualizar' if reserva_editar else 'Confirmar Reserva' }}</button>
+                    {% if reserva_editar %}
+                    <a href="/reservas" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
     <div class="col-md-8">
         <div class="bg-white p-3 rounded shadow-sm">
+            <form action="/reservas" method="GET" class="input-group mb-3">
+                <input type="search" name="q" class="form-control" placeholder="Buscar reserva" value="{{ q or '' }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+                {% if q %}
+                <a href="/reservas" class="btn btn-outline-secondary">Limpiar</a>
+                {% endif %}
+            </form>
             <table class="table table-sm">
                 <thead>
                     <tr>
@@ -42,7 +109,11 @@
                         <td>{{ r.fecha_llegada }}</td>
                         <td>{{ r.fecha_salida }}</td>
                         <td>${{ r.valor_reserva }}</td>
-                        <td><a href="/eliminar/reserva/{{ r.id_reserva }}" class="text-danger">Eliminar</a></td>
+                        <td>
+                            <a href="/reservas/buscar/{{ r.id_reserva }}" class="btn btn-sm btn-info">Ver</a>
+                            <a href="/reservas/editar/{{ r.id_reserva }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            <a href="/eliminar/reserva/{{ r.id_reserva }}" class="btn btn-sm btn-danger">Eliminar</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -50,4 +121,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

@@ -1,24 +1,54 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="row">
+    {% if servicio_detalle %}
     <div class="col-md-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-info text-white fw-bold">Nuevo Servicio</div>
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                Detalle de Servicio
+            </div>
             <div class="card-body">
-                <form action="/servicios/guardar" method="POST">
-                    <input type="text" name="nombre" class="form-control mb-2" placeholder="Nombre del Servicio" required>
-                    <textarea name="descripcion" class="form-control mb-2" placeholder="Descripción"></textarea>
-                    <input type="number" step="0.01" name="costo" class="form-control mb-2" placeholder="Costo" required>
+                <p><strong>ID:</strong> {{ servicio_detalle.id_servicio }}</p>
+                <p><strong>Nombre:</strong> {{ servicio_detalle.nombre }}</p>
+                <p><strong>Descripción:</strong> {{ servicio_detalle.descripcion }}</p>
+                <p><strong>Costo:</strong> ${{ servicio_detalle.costo }}</p>
+                <p><strong>Estado:</strong> {{ servicio_detalle.estado }}</p>
+                <a href="/servicios" class="btn btn-outline-secondary btn-sm">Volver</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="{% if servicio_detalle %}col-md-4{% else %}col-md-4{% endif %}">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-info text-white fw-bold">{{ 'Actualizar Servicio' if servicio_editar else 'Nuevo Servicio' }}</div>
+            <div class="card-body">
+                {% if servicio_editar %}
+                {% set servicio_key = servicio_editar.id_servicio %}
+                {% endif %}
+                <form action="{{ '/servicios/actualizar/' ~ servicio_key if servicio_editar else '/servicios/guardar' }}" method="POST">
+                    <input type="text" name="nombre" class="form-control mb-2" placeholder="Nombre del Servicio" value="{{ servicio_editar.nombre if servicio_editar else '' }}" required>
+                    <textarea name="descripcion" class="form-control mb-2" placeholder="Descripción">{{ servicio_editar.descripcion if servicio_editar and servicio_editar.descripcion else '' }}</textarea>
+                    <input type="number" step="0.01" name="costo" class="form-control mb-2" placeholder="Costo" value="{{ servicio_editar.costo if servicio_editar else '' }}" required>
                     <select name="estado" class="form-select mb-2">
-                        <option value="Activo">Activo</option>
-                        <option value="Inactivo">Inactivo</option>
+                        <option value="Activo" {% if servicio_editar and servicio_editar.estado == 'Activo' %}selected{% endif %}>Activo</option>
+                        <option value="Inactivo" {% if servicio_editar and servicio_editar.estado == 'Inactivo' %}selected{% endif %}>Inactivo</option>
                     </select>
-                    <button type="submit" class="btn btn-info text-white w-100">Crear Servicio</button>
+                    <button type="submit" class="btn btn-info text-white w-100">{{ 'Actualizar' if servicio_editar else 'Crear Servicio' }}</button>
+                    {% if servicio_editar %}
+                    <a href="/servicios" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
-    <div class="col-md-8">
+    <div class="{% if servicio_detalle %}col-md-8{% else %}col-md-8{% endif %}">
+        <form action="/servicios" method="GET" class="input-group mb-3">
+            <input type="search" name="q" class="form-control" placeholder="Buscar servicio" value="{{ q or '' }}">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+            {% if q %}
+            <a href="/servicios" class="btn btn-outline-secondary">Limpiar</a>
+            {% endif %}
+        </form>
         <div class="row">
             {% for s in lista %}
             <div class="col-md-6 mb-3">
@@ -27,6 +57,8 @@
                         <h5 class="card-title">{{ s.nombre }}</h5>
                         <p class="card-text text-muted small">{{ s.descripcion }}</p>
                         <p class="fw-bold text-primary">${{ s.costo }}</p>
+                        <a href="/servicios/buscar/{{ s.id_servicio }}" class="btn btn-sm btn-info">Ver</a>
+                        <a href="/servicios/editar/{{ s.id_servicio }}" class="btn btn-sm btn-outline-primary">Editar</a>
                         <a href="/eliminar/servicio/{{ s.id_servicio }}" class="btn btn-sm btn-danger">Eliminar</a>
                     </div>
                 </div>

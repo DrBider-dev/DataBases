@@ -3,23 +3,52 @@
 <div class="row">
     <div class="col-md-4">
         <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">Registrar Persona</div>
+            <div class="card-header bg-primary text-white">
+                {{ 'Actualizar Persona' if persona_editar else 'Registrar Persona' }}
+            </div>
             <div class="card-body">
-                <form action="/personas/guardar" method="POST">
-                    <input type="number" name="id_persona" min="0" class="form-control mb-2" placeholder="Cédula/ID" required>
-                    <input type="text" name="primer_nombre" class="form-control mb-2" placeholder="Primer Nombre" required>
-                    <input type="text" name="primer_apellido" class="form-control mb-2" placeholder="Primer Apellido" required>
-                    <input type="email" name="email" class="form-control mb-2" placeholder="Correo Electrónico" required>
-                    <input type="text" name="segundo_nombre" class="form-control mb-2" placeholder="Segundo Nombre (Opcional)">
-                    <input type="text" name="segundo_apellido" class="form-control mb-2" placeholder="Segundo Apellido (Opcional)">
-                    <button type="submit" class="btn btn-success w-100">Guardar</button>
+                <form action="{{ '/personas/actualizar/' ~ persona_editar.id_persona if persona_editar else '/personas/guardar' }}" method="POST">
+                    <input type="number" name="id_persona" min="0" class="form-control mb-2" placeholder="Cédula/ID" value="{{ persona_editar.id_persona if persona_editar else '' }}" {% if persona_editar %}readonly{% endif %} required>
+                    <input type="text" name="primer_nombre" class="form-control mb-2" placeholder="Primer Nombre" value="{{ persona_editar.primer_nombre if persona_editar else '' }}" required>
+                    <input type="text" name="primer_apellido" class="form-control mb-2" placeholder="Primer Apellido" value="{{ persona_editar.primer_apellido if persona_editar else '' }}" required>
+                    <input type="email" name="email" class="form-control mb-2" placeholder="Correo Electrónico" value="{{ persona_editar.email if persona_editar else '' }}" required>
+                    <input type="text" name="segundo_nombre" class="form-control mb-2" placeholder="Segundo Nombre (Opcional)" value="{{ persona_editar.segundo_nombre if persona_editar and persona_editar.segundo_nombre else '' }}">
+                    <input type="text" name="segundo_apellido" class="form-control mb-2" placeholder="Segundo Apellido (Opcional)" value="{{ persona_editar.segundo_apellido if persona_editar and persona_editar.segundo_apellido else '' }}">
+                    <input type="text" name="calle" class="form-control mb-2" placeholder="Calle" value="{{ persona_editar.calle if persona_editar and persona_editar.calle else '' }}">
+                    <input type="text" name="carrera" class="form-control mb-2" placeholder="Carrera" value="{{ persona_editar.carrera if persona_editar and persona_editar.carrera else '' }}">
+                    <input type="text" name="numero" class="form-control mb-2" placeholder="Número" value="{{ persona_editar.numero if persona_editar and persona_editar.numero else '' }}">
+                    <button type="submit" class="btn btn-success w-100">{{ 'Actualizar' if persona_editar else 'Guardar' }}</button>
+                    {% if persona_editar %}
+                    <a href="/personas" class="btn btn-outline-secondary w-100 mt-2">Cancelar</a>
+                    {% endif %}
                 </form>
             </div>
         </div>
     </div>
     <div class="col-md-8">
         <div class="table-responsive bg-white p-3 rounded shadow-sm">
-            <table class="table table-hover">
+            {% if persona_detalle %}
+            <div class="card mb-3">
+                <div class="card-header bg-info text-white">
+                    Detalle de Persona
+                </div>
+                <div class="card-body">
+                    <p><strong>ID:</strong> {{ persona_detalle.id_persona }}</p>
+                    <p><strong>Nombre:</strong> {{ persona_detalle.primer_nombre }} {{ persona_detalle.segundo_nombre or '' }} {{ persona_detalle.primer_apellido }} {{ persona_detalle.segundo_apellido or '' }}</p>
+                    <p><strong>Email:</strong> {{ persona_detalle.email }}</p>
+                    <p><strong>Dirección:</strong> {{ persona_detalle.calle or '' }} {{ persona_detalle.carrera or '' }} {{ persona_detalle.numero or '' }}</p>
+                    <a href="/personas" class="btn btn-outline-secondary btn-sm">Volver</a>
+                </div>
+            </div>
+            {% endif %}
+            <form action="/personas" method="GET" class="input-group mb-3">
+                <input type="search" name="q" class="form-control" placeholder="Buscar persona" value="{{ q or '' }}">
+                <button class="btn btn-outline-primary" type="submit">Buscar</button>
+                {% if q %}
+                <a href="/personas" class="btn btn-outline-secondary">Limpiar</a>
+                {% endif %}
+            </form>
+            <table class="table table-hover align-middle">
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -35,8 +64,14 @@
                         <td>{{ p.primer_nombre }} {{ p.primer_apellido }}</td>
                         <td>{{ p.email }}</td>
                         <td>
-                            <a href="/eliminar/persona/{{ p.id_persona }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar?')">🗑</a>
+                            <a href="/personas/buscar/{{ p.id_persona }}" class="btn btn-info btn-sm">Ver</a>
+                            <a href="/personas/editar/{{ p.id_persona }}" class="btn btn-outline-primary btn-sm">Editar</a>
+                            <a href="/eliminar/persona/{{ p.id_persona }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar?')">Eliminar</a>
                         </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No se encontraron personas.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
