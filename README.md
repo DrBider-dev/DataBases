@@ -97,29 +97,31 @@ cd DataBases
 
 **2. Ejecutar el script de creación de tablas**
 ```bash
-psql -U postgres -f Scripts/Hotel_BD.sql
+psql -U postgres -f hotel-db/scripts/01_creacion_tablas.sql
 ```
 
-**3. Crear roles y asignar permisos**
+**3. Cargar datos de prueba**
 ```bash
-psql -U postgres -d hotel_db -f scripts/02_roles_permisos.sql
+psql -U postgres -d hotel_db -f hotel-db/scripts/02_carga_datos.sql
 ```
 
-**4. Cargar datos de prueba**
+**4. Ejecutar consultas de prueba**
 ```bash
-psql -U postgres -d hotel_db -f scripts/03_carga_datos.sql
+psql -U postgres -d hotel_db -f hotel-db/scripts/03_consultas.sql
 ```
 
 **5. Verificar la instalación**
 ```sql
--- Conectarse a la base de datos
 \c hotel_db
-
--- Listar tablas creadas
 \dt hotel.*
+```
 
--- Listar roles creados
-\du
+**6. Ejecutar app**
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r hotel-db/src/requirements.txt
+python app.py
 ```
 
 ---
